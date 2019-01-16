@@ -1,0 +1,273 @@
+<html>
+<head>
+    <!-- these 4 files always have to be included -->
+    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
+
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="../../lib/js/ace-1.2.0/ace.js"></script>
+
+    <!-- these files always have to be included -->
+    <script type="text/javascript" src="../../js/translate.js"></script>
+    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+    <script type="text/javascript" src="words.js"></script>
+
+    <script type="text/javascript" src="../../lib/js/selectID.js"></script>
+    <style>
+        .m .col .select-wrapper+label {
+            top: -26px;
+        }
+        .m span {
+            font-size: 12px;
+        }
+        #wrapperConfig {
+            width: 100%;
+            height: 100%;
+        }
+        #tab-json>.row {
+            height: calc(100% - 20px);
+        }
+        #tab-json .col {
+            height: 100%;
+        }
+        .adapter-container>.row {
+            height: 100%;
+        }
+        .m .page {
+            height: calc(100% - 50px);
+        }
+        .select-id {
+            display: none !important;
+            position: absolute !important;
+            bottom: 0;
+            right: 0;
+            opacity: 0.5;
+        }
+    </style>
+    <!-- you have to define 2 functions in the global scope: -->
+    <script type="text/javascript">
+        var selectId;
+        var editorConfig;
+        var editorCSS;
+
+        var wrapperConfig;
+        var wrapperCSS;
+
+        function getDefaultConfig(onChange) {
+            $.get('config.js', function (data) {
+                wrapperConfig = data.toString();
+                onChange();
+                initEditorConfig(onChange);
+            });
+        }
+
+        function initEditorConfig(onChange) {
+            if (!editorConfig) {
+                setTimeout(function () {
+                    if ($('#wrapperConfig').is(':visible')) {
+                        editorConfig = ace.edit('wrapperConfig');
+                        editorConfig.getSession().setMode('ace/mode/javascript');
+                        editorConfig.$blockScrolling = true;
+                        editorConfig.setValue(wrapperConfig);
+                        editorConfig.getSession().on('change', function() {
+                            onChange();
+                        });
+                    } else {
+                        initEditorConfig(onChange);
+                    }
+                }, 200);
+            }
+        }
+
+        function initEditorCSS(onChange) {
+            if (!editorCSS) {
+                setTimeout(function () {
+                    if ($('#wrapperCSS').is(':visible')) {
+                        editorCSS = ace.edit('wrapperCSS');
+                        editorCSS.getSession().setMode('ace/mode/javascript');
+                        editorCSS.$blockScrolling = true;
+                        editorCSS.setValue(wrapperCSS);
+                        editorCSS.getSession().on('change', function() {
+                            onChange();
+                        });
+                    } else {
+                        initEditorCSS(onChange);
+                    }
+                }, 500);
+            }
+        }
+
+        function loadConfigFile(onChange) {
+            socket.emit('readFile', 'tileboard.0', 'config.js', function (err, data) {
+                if (!data) {
+                    getDefaultConfig(onChange);
+                } else {
+                    wrapperConfig = data.toString();
+                    initEditorConfig(onChange);
+                }
+            });
+        }
+
+        function loadCSSFile(onChange) {
+            socket.emit('readFile', 'tileboard.0', 'custom.css', function (err, data) {
+                wrapperCSS = (data || '').toString();
+                initEditorCSS(onChange);
+            });
+        }
+
+        function saveConfigFile(data, callback) {
+            socket.emit('writeFile', 'tileboard.0', 'config.js', data, function (err) {
+                callback && callback(err);
+            });
+        }
+
+        function saveCSSFile(data, callback) {
+            socket.emit('writeFile', 'tileboard.0', 'custom.css', data, function (err) {
+                callback && callback(err);
+            });
+        }
+
+        function initSelectId (cb) {
+            if (selectId) return selectId;
+            socket.emit('getObjects', function (err, res) {
+                if (!err && res) {
+                    selectId = $('#dialog-select-member').selectId('init',  {
+                        noMultiselect: true,
+                        objects: res,
+                        imgPath:       '../../lib/css/fancytree/',
+                        filter:        {type: 'state'},
+                        name:          'vcard-select-state',
+                        texts: {
+                            select:          _('Select'),
+                            cancel:          _('Cancel'),
+                            all:             _('All'),
+                            id:              _('ID'),
+                            name:            _('Name'),
+                            role:            _('Role'),
+                            room:            _('Room'),
+                            value:           _('Value'),
+                            selectid:        _('Select ID'),
+                            from:            _('From'),
+                            lc:              _('Last changed'),
+                            ts:              _('Time stamp'),
+                            wait:            _('Processing...'),
+                            ack:             _('Acknowledged'),
+                            selectAll:       _('Select all'),
+                            unselectAll:     _('Deselect all'),
+                            invertSelection: _('Invert selection')
+                        },
+                        columns: ['image', 'name', 'role', 'room', 'value']
+                    });
+                    cb && cb(selectId);
+                }
+            });
+        }
+
+        // the function loadSettings has to exist ...
+        function load(settings, onChange) {
+            if (!settings) return;
+
+            loadConfigFile(onChange);
+            loadCSSFile(onChange);
+
+            $('.select-id').on('click', function () {
+                initSelectId(function (sid) {
+                    sid.selectId('show', '', function (newId) {
+                        console.log(newId);
+                    });
+                });
+            });
+
+            onChange(false);
+            // M.updateTextFields();  // function Materialize.updateTextFields(); to reinitialize all the Materialize labels on the page if you are dynamically adding inputs.
+        }
+
+        // ... and the function save has to exist.
+        // you have to make sure the callback is called with the settings object as first param!
+        function save(callback) {
+            var wait = 0;
+            if (editorConfig) {
+                wait++;
+                saveConfigFile(editorConfig.getValue(), function () {
+                    if (!--wait) callback({});
+                });
+            }
+            if (editorCSS) {
+                wait++;
+                saveCSSFile(editorCSS.getValue(), function () {
+                    if (!--wait) callback({});
+                });
+            }
+
+            !wait && callback({});
+        }
+    </script>
+</head>
+<body>
+<!-- you have to put your config page in a div with id adapter-container -->
+<div class="m adapter-container">
+    <div class="row">
+        <div class="col s12">
+            <ul class="tabs">
+                <li class="tab col s4"><a href="#tab-main"  class="translate active">Main settings</a></li>
+                <li class="tab col s4 tab-json"><a href="#tab-js"    class="translate">Configuration file</a></li>
+                <li class="tab col s4 tab-json"><a href="#tab-css"    class="translate">Custom CSS</a></li>
+            </ul>
+        </div>
+        <div id="tab-main" class="col s12 page">
+            <div class="row">
+                <div class="col s6 m4 l2">
+                    <img src="tileboard.png" class="logo">
+                </div>
+            </div>
+            <!--div class="row">
+                <div class="input-field col s12 m6 l4 xl3">
+                    <input id="useGlobalHomebridge" type="checkbox" class="value" />
+                    <span for="useGlobalHomebridge" class="translate">useGlobalHomebridge</span>
+                </div>
+                <div class="input-field col s12 m6 l4 xl3">
+                    <input id="insecureAccess" type="checkbox" class="value" />
+                    <span for="insecureAccess" class="translate">Use insecure Homebridge mode</span>
+                </div>
+            </div>
+            <div class="row global">
+                <div class="input-field col s12 m6 l4 xl3">
+                    <input class="value" id="globalHomebridgeBasePath" type="text">
+                    <label for="globalHomebridgeBasePath">Global Homebridge Path</label>
+                    <span class="translate">Global Homebridge Path</span>
+                </div>
+                <div class="input-field col s12 m6 l4 xl3">
+                    <input class="value" id="globalHomebridgeConfigPath" type="text">
+                    <label for="globalHomebridgeConfigPath">Global Homebridge Config Directory Path</label>
+                    <span class="translate">Global Homebridge Config Directory Path</span>
+                </div>
+            </div>
+            <div class="row local">
+                <div class="col s12">
+                    <label class="translate">Additional npm modules:</label>
+                    <div class="chips libraries"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s4 ">
+                    <input class="value" id="characteristicPollingInterval" type="number" min="0" max="1000000"/>
+                    <label for="characteristicPollingInterval">Value Polling Interval</label>
+                    <span class="translate">Value Polling Interval</span>
+                </div>
+            </div-->
+        </div>
+        <div id="tab-js" class="col s12 page" style="position: relative; width: 100%; height: calc(100% - 70px); overflow: hidden">
+            <a class="waves-effect waves-light btn select-id"><span class="translate">Select ID</span></a><br>
+            <div id="wrapperConfig">Wrapper-Configuration</div>
+        </div>
+        <div id="tab-css" class="col s12 page" style="width: 100%; height: calc(100% - 70px); overflow: hidden">
+            <div id="wrapperCSS">Wrapper-CSS</div>
+        </div>
+    </div>
+    <div id="dialog-select-member" style="display: none"></div>
+</div>
+</body>
+
+</html>

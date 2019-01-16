@@ -1,0 +1,92 @@
+{
+    "common": {
+        "name": "tileboard",
+        "version": "0.1.0",
+        "title": "Visualisation",
+        "titleLang": {
+            "en": "Visualisation with TileBoard",
+            "de": "Visualisierung mit TileBoard",
+            "ru": "Визуализация с TileBoard",
+            "pt": "Visualização com o TileBoard",
+            "nl": "Visualisatie met TileBoard",
+            "fr": "Visualisation avec TileBoard",
+            "it": "Visualizzazione con TileBoard",
+            "es": "Visualización con TileBoard",
+            "pl": "Wizualizacja za pomocą TileBoard",
+            "zh-cn": "使用TileBoard进行可视化"
+        },
+        "news": {
+            "0.1.0": {
+                "en": "initial commit",
+                "de": "anfängliches Commit",
+                "ru": "начальный коммит",
+                "pt": "commit inicial",
+                "nl": "initiële commit",
+                "fr": "commit initial",
+                "it": "commit iniziale",
+                "es": "Compromiso inicial",
+                "pl": "początkowe zatwierdzenie",
+                "zh-cn": "初始提交"
+            }
+        },
+        "desc": {
+            "en": "TileBoard for visualisation in ioBroker",
+            "de": "TileBoard zur Visualisierung in ioBroker",
+            "ru": "TileBoard для визуализации в ioBroker",
+            "pt": "TileBoard para visualização no ioBroker",
+            "nl": "TileBoard voor visualisatie in ioBroker",
+            "fr": "TileBoard pour la visualisation dans ioBroker",
+            "it": "TileBoard per la visualizzazione in ioBroker",
+            "es": "TileBoard para visualización en ioBroker",
+            "pl": "TileBoard do wizualizacji w ioBroker",
+            "zh-cn": "TileBoard用于ioBroker中的可视化"
+        },
+        "platform": "Javascript/Node.js",
+        "loglevel": "info",
+        "icon": "tileboard.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.tileboard/master/admin/tileboard.png",
+        "keywords": [
+            "DashUI",
+            "GUI",
+            "graphical",
+            "scada"
+        ],
+        "readme": "https://github.com/iobroker/ioBroker.tileboard/blob/master/README.md",
+        "authors": [
+            "bluefox <dogafox@gmail.com>"
+        ],
+        "localLink": "%web_protocol%://%ip%:%web_port%/tileboard/index.html",
+        "license": "MIT",
+        "dependencies": [
+            {
+                "web": ">=1.5.4"
+            }
+        ],
+        "singleton": true,
+        "type": "visualization",
+        "noConfig": false,
+        "onlyWWW":  true,
+        "materialize": true,
+        "welcomeScreen": {
+            "link": "tileboard/index.html",
+            "name": "TileBoard",
+            "img": "tileboard/favicon.png",
+            "color": "#ffe9c8",
+            "order": 0
+        }
+    },
+    "native": {
+    },
+    "instanceObjects": [
+        {
+            "_id": "",
+            "type": "meta",
+            "common": {
+                "name": "user files and images for TileBoard",
+                "type": "meta.user"
+            },
+            "native": {}
+        }
+    ]
+}
