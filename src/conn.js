@@ -1,3 +1,10 @@
+/*
+    Objects select dialog
+
+    2014-2019 bluefox <dogafox@gmail.com>
+
+    MIT License
+ */
 ////// ----------------------- Connection "class" ---------------------- ////////////
 /* jshint browser:true */
 /* global document*/
@@ -13,7 +20,8 @@
 /* global socketUrl */
 /* global socketSession */
 /* global storage */
-/* jshint -W097 */// jshint strict:false
+/* jshint -W097 */
+/* jshint strict: false */
 
 'use strict';
 

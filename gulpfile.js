@@ -2,10 +2,13 @@
 
 const gulp       = require('gulp');
 const fs         = require('fs');
+const path       = require('path');
 const replace    = require('gulp-replace');
 const pkg        = require('./package.json');
 const iopackage  = require('./io-package.json');
 const version    = (pkg && pkg.version) ? pkg.version : iopackage.common.version;
+const request    = require('request');
+const unzip      = require('unzip');
 /*const appName   = getAppName();
 
 function getAppName() {
@@ -455,6 +458,78 @@ gulp.task('updateReadme', function (done) {
     done();
 });
 
+gulp.task('download', done => {
+    request({
+        url: 'https://github.com/GermanBluefox/TileBoard/archive/master.zip',
+        encoding: null,
+        method: 'GET'
+    }, (err, status, body) => {
+        if (body) {
+            if (!fs.existsSync(__dirname + '/original')) {
+                fs.mkdirSync(__dirname + '/original');
+            }
+            fs.writeFileSync(__dirname + '/original/master.zip', body);
+        }
+        done();
+    });
+});
+
+gulp.task('unzip', done => {
+    return fs.createReadStream(__dirname + '/original/master.zip')
+        .pipe(unzip.Extract({ path: __dirname + '/original'}));
+});
+
+function copyFolder(src, dst) {
+    const files = fs.readdirSync(src);
+    files.forEach(file => {
+        const fullPath = path.join(src, file);
+        const fullPathD = path.join(dst, file);
+        const stat = fs.lstatSync(fullPath);
+        if (stat.isDirectory()) {
+            if (!fs.existsSync(fullPathD)) {
+                fs.mkdirSync(fullPathD);
+            }
+            copyFolder(fullPath, fullPathD);
+        } else {
+            if (file.match(/\.md$/)) return;
+            if (file.match(/\.gitignore$/)) return;
+            if (file.match(/\.less$/)) return;
+            if (file.match(/\.example\.js$/)) return;
+            if (!fs.existsSync(dst)) {
+                fs.mkdirSync(dst);
+            }
+            const data = fs.readFileSync(fullPath);
+            fs.writeFileSync(fullPathD, data);
+        }
+    })
+}
+
+function prepareIndexHtml() {
+    let data = fs.readFileSync(__dirname + '/original/TileBoard-master/index.html').toString();
+    data = data.replace('<link rel="stylesheet" href="styles/custom.css"/>', '<link rel="stylesheet" href="../tileboard.0/custom.css"/>');
+    data = data.replace('<script src="config.js"></script>', '<script src="../tileboard.0/config.js"></script>');
+    if (data.indexOf('socket.io.js') === -1) {
+        data = data.replace('<script src="scripts/vendors/angular.min.js"></script>',
+            '<script type="text/javascript" src="../../lib/js/socket.io.js"></script>\n' +
+            '   <script src="./_socket/info.js"></script>\n' +
+            '   <script src="scripts/vendors/conn.js"></script>\n' +
+            '   <script src="scripts/vendors/angular.min.js"></script>');
+    }
+
+    fs.writeFileSync(__dirname + '/www/index.html', data);
+}
+
+gulp.task('copy', done => {
+    copyFolder(__dirname + '/original/TileBoard-master/', __dirname + '/www/');
+    //fs.writeFileSync(__dirname + '/www/index.html', fs.readFileSync(__dirname + '/src/index.html'));
+    fs.writeFileSync(__dirname + '/www/scripts/vendors/conn.js', fs.readFileSync(__dirname + '/src/conn.js'));
+    fs.writeFileSync(__dirname + '/www/scripts/models/api.js', fs.readFileSync(__dirname + '/src/api.js'));
+    prepareIndexHtml();
+    done();
+});
+
 gulp.task('replace', gulp.series('replacePkg', 'replaceVis', 'replaceHtml'));
 
-gulp.task('default', gulp.series('updatePackages', 'updateReadme', 'replace'));
+gulp.task('update', gulp.series('updatePackages', 'updateReadme', 'replace'));
+
+gulp.task('default', gulp.series('download', 'unzip', 'copy'));

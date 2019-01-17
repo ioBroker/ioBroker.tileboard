@@ -1,5 +1,5 @@
 /**
- * @class HApi $Api
+ * @class IoBApi $Api
  */
 
 var IoBApi = (function () {
@@ -11,6 +11,7 @@ var IoBApi = (function () {
 
     function $Api () {
         this._conn = window.servConn;
+        this._conn.namespace = 'tileboard.0';
 
         this._listeners = {
             error: [],
@@ -24,9 +25,19 @@ var IoBApi = (function () {
         this._requestsing = [];
         this._objects = {};
         this.language = null;
-
+        this._instance = (typeof window.localStorage !== 'undefined' && window.localStorage.getItem('tbinstance')) || this._generateInstance();
+        console.log('Instance of this browser is ' + this._instance);
         this._init();
     }
+    $Api.prototype._generateInstance = function () {
+        var instance = (Math.random() * 4294967296).toString(16);
+        instance = '0000000' + instance;
+        instance = instance.substring(instance.length - 8);
+        if (typeof window.localStorage !== 'undefined') {
+            window.localStorage.setItem('tbinstance', instance);
+        }
+        return instance;
+    };
 
     $Api.prototype._init = function () {
         this._connect();
@@ -89,6 +100,23 @@ var IoBApi = (function () {
                 self._conn.setState(id, true, function (err) {
                     callback && callback();
                 });
+            } else if(data.service === 'set_page') {
+                if (typeof data.service_data.page === 'object') {
+                    self._conn.setState(self._conn.namespace + '.control.data', {
+                        val: data.service_data.page.title,
+                        ack: true
+                    }, function () {
+                        self._conn.setState(self._conn.namespace + '.control.instance', {
+                            val: self._instance,
+                            ack: true
+                        }, function () {
+                            self._conn.setState(self._conn.namespace + '.control.command', {
+                                val: 'changedView',
+                                ack: true
+                            });
+                        });
+                    });
+                }
             } else if (data.service.match(/^set_/) && data.service !== 'set_datetime') {
                 // set_value          => service_data.value
                 // set_operation_mode => service_data.operation_mode
@@ -132,10 +160,87 @@ var IoBApi = (function () {
         // The states will be subscribed one by one to get better performance in getState
     };
 
+    $Api.prototype._capitalWords = function (name) {
+        return (name || '').split(/[\s_]/)
+            .filter(item => item)
+            .map(word => word ? word[0].toUpperCase() + word.substring(1).toLowerCase() : '')
+            .join(' ');
+    };
+
+    $Api.prototype._getObjectName = function (objects, id, settings, options, isDesc) {
+        var item = objects[id];
+        var text = id;
+        var attr = isDesc ? 'desc' : 'name';
+
+        if (settings && settings.name) {
+            text = settings.name;
+            if (typeof text === 'object') {
+                text = text[this.language] || text.en;
+            }
+        } else
+        if (item && item.common && item.common[attr]) {
+            text = item.common[attr];
+            if (attr !== 'desc' && !text && item.common.desc) {
+                text = item.common.desc;
+            }
+            if (typeof text === 'object') {
+                text = text[this.language] || text.en;
+            }
+            text = (text || '').toString().replace(/[_.]/g, ' ');
+
+            if (text === text.toUpperCase()) {
+                text = text[0] + text.substring(1).toLowerCase();
+            }
+        } else {
+            var pos = id.lastIndexOf('.');
+            text = id.substring(pos + 1).replace(/[_.]/g, ' ');
+            text = this._capitalWords(text);
+        }
+        return text.trim();
+    };
+
+    $Api.prototype._getObjectIcon = function (id, obj) {
+        if (obj && obj.common && obj.common.icon) {
+            var icon = obj.common.icon;
+            if (icon.startsWith('data:image')) {
+                return icon;
+            } else {
+                var parts = id.split('.');
+                if (parts[0] === 'system') {
+                    icon = 'adapter/' + parts[2] + icon;
+                } else {
+                    icon = 'adapter/' + parts[0] + icon;
+                }
+
+                if (window.location.pathname.match(/tileboard\/[.\d]+/)) {
+                    icon = '../../' + icon;
+                } else
+                if (window.location.pathname.match(/tileboard\//)) {
+                    icon = '../' + icon;
+                }
+                return icon;
+            }
+        } else {
+            return null;
+        }
+    };
+
     $Api.prototype._iob2hass = function (id, state) {
         state = state || {};
         var common = this._objects[id] ? this._objects[id].common || {} : {};
         try {
+            var icon = this._getObjectIcon(id, this._objects[id]);
+            var isPosition = common.role && common.role.match(/^value\.gps/);
+            var longitude = null;
+            var latitude = null;
+            if (isPosition && typeof state.val === 'string') {
+                var parts = state.val.toString().split(';');
+                if (parts.length === 2) {
+                    longitude = parseFloat(parts[0].replace(',', '.'));
+                    latitude = parseFloat(parts[1].replace(',', '.'));
+                }
+            }
+
             return {
                 entity_id: id,
                 attributes: {
@@ -145,7 +250,7 @@ var IoBApi = (function () {
                     step: common.step !== undefined ? common.step : null,
                     min_temp: common.min !== undefined ? common.min : null,
                     max_temp: common.max !== undefined ? common.max : null,
-                    friendly_name: common.name !== undefined ? (typeof common.name === 'object' ? common.name[this.language] || common.name.en : common.name): null,
+                    friendly_name: common.name !== undefined ? this._getObjectName(this._objects, id) : null,
                     temperature: common.role && common.role.match(/temperature/) ? state.val : null,
                     target_temp_low: common.min !== undefined ? common.min : null,
                     target_temp_high: common.max !== undefined ? common.max : null,
@@ -153,10 +258,10 @@ var IoBApi = (function () {
                     volume_level: common.role && common.role.match(/volume/) ? state.val : null,
                     brightness: common.role && common.role.match(/brightness/) ? state.val : null,
                     target_temp_step: common.step !== undefined ? common.step : null,
+                    entity_picture: icon || null,
+                    longitude: longitude,
+                    latitude: latitude,
 
-                    entity_picture: null,
-                    longitude: null,
-                    latitude: null,
                     bgStyles: null,
                     has_date: null,
                     has_time: null,
@@ -197,6 +302,10 @@ var IoBApi = (function () {
 
     $Api.prototype.getState = function (id) {
         var self = this;
+        if (!id) return;
+        if (id[0] === '&') {
+            id = id.substring(1);
+        }
 
         if (this._requests.indexOf(id) !== -1) return;
         if (this._requestsing.indexOf(id) !== -1) return;
@@ -306,9 +415,92 @@ var IoBApi = (function () {
                         self._setStatus(STATUS_OPENED);
                         self._ready();
                     }
+                    self._conn.subscribe(self._conn.namespace + '.control.*');
+
                 } else {
                     self._setStatus(STATUS_CLOSED);
                 }
+            },
+            onCommand:    function (instance, command, data) {
+                var parts;
+                if (!instance || (instance !== self._instance && instance !== 'FFFFFFFF' && instance.indexOf('*') === -1)) return false;
+
+                if (command) {
+                    // external Commands
+                    switch (command) {
+                        case 'alert':
+                            if (data && data[0] === '{') {
+                                data = JSON.parse(data);
+                            } else {
+                                data = {
+                                    "id": "text",
+                                    "type": "info",
+                                    "message": data,
+                                    "lifetime": 5,
+                                }
+                            }
+
+                            Noty.addObject(data);
+                            break;
+                        case 'changedView':
+                            // do nothing;
+                            break;
+                        case 'changeView':
+                            if (typeof data === 'number') {
+                                window.openPage(CONFIG.pages[data]);
+                            } else{
+                                CONFIG.pages.forEach(function (page) {
+                                    if (page.title === data) {
+                                        window.openPage(page);
+                                        return false;
+                                    }
+                                })
+                            }
+                            break;
+                        case 'refresh':
+                        case 'reload':
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1);
+                            break;
+                        case 'popup':
+                            window.open(data);
+                            break;
+                        case 'playSound':
+                            setTimeout(function () {
+                                var href;
+                                if (data && data.match(/^http(s)?:\/\//)) {
+                                    href = data;
+                                } else {
+                                    href = location.protocol + '//' + location.hostname + ':' + location.port + data;
+                                }
+                                // force read from server
+                                href += '?' + Date.now();
+
+                                if (typeof Audio !== 'undefined') {
+                                    var snd = new Audio(href); // buffers automatically when created
+                                    snd.play();
+                                } else {
+                                    //noinspection JSJQueryEfficiency
+                                    var $sound = $('#external_sound');
+                                    if (!$sound.length) {
+                                        $('body').append('<audio id="external_sound"></audio>');
+                                        $sound = $('#external_sound');
+                                    }
+                                    $sound.attr('src', href);
+                                    document.getElementById('external_sound').play();
+                                }
+                            }, 1);
+                            break;
+
+                        default:
+                            console.warn('unknown external command ' + command);
+                            break;
+                    }
+                }
+
+                return true;
+
             },
             onRefresh:    function () {
                 window.location.reload();
@@ -332,7 +524,11 @@ var IoBApi = (function () {
                 self._setStatus(STATUS_ERROR);
                 self._sendError.call(self, 'System error', err);
 
-                if (err.arg === 'vis.0.control.instance' || err.arg === 'vis.0.control.data' || err.arg === 'vis.0.control.command') {
+                if (err && (
+                    err.arg === self._conn.namespace + '.control.instance' ||
+                    err.arg === self._conn.namespace + '.control.data' ||
+                    err.arg === self._conn.namespace + '.control.command')
+                ) {
                     console.warn('Cannot set ' + err.arg + ', because of insufficient permissions');
                 }
             }

@@ -3,10 +3,13 @@
     <!-- these 4 files always have to be included -->
     <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
     <link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
+    <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css"/>
 
     <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
     <script type="text/javascript" src="../../lib/js/ace-1.2.0/ace.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
 
     <!-- these files always have to be included -->
     <script type="text/javascript" src="../../js/translate.js"></script>
@@ -16,6 +19,10 @@
 
     <script type="text/javascript" src="../../lib/js/selectID.js"></script>
     <style>
+        .m #dialog-select-member {
+            height: calc(100% - 5px) !important;
+        }
+
         .m .col .select-wrapper+label {
             top: -26px;
         }
@@ -39,11 +46,27 @@
             height: calc(100% - 50px);
         }
         .select-id {
-            display: none !important;
             position: absolute !important;
-            bottom: 0;
-            right: 0;
+            bottom: 5px;
+            right: 30px;
             opacity: 0.5;
+            z-index: 10 !important;
+        }
+        .adapter-container {
+            position: relative;
+        }
+        #dialog-select-member {
+            position: absolute;
+            top: 2% !important;
+            background: white;
+            border: 3px solid #2196f3;
+            box-sizing: border-box;
+        }
+        #dialog-select-member .modal-footer {
+            padding-left: 15px;
+        }
+        #wrapperCSS, #wrapperConfig {
+            height: 100%;
         }
     </style>
     <!-- you have to define 2 functions in the global scope: -->
@@ -55,9 +78,13 @@
         var wrapperConfig;
         var wrapperCSS;
 
-        function getDefaultConfig(onChange) {
+        var ERROR_NOT_EXISTS   = 'Not exists';
+
+        function getDefaultConfig(uploadDefault, onChange) {
             $.get('config.js', function (data) {
                 wrapperConfig = data.toString();
+                socket.emit('writeFile', 'tileboard.0', 'config.js', wrapperConfig);
+
                 onChange();
                 initEditorConfig(onChange);
             });
@@ -88,7 +115,7 @@
                         editorCSS = ace.edit('wrapperCSS');
                         editorCSS.getSession().setMode('ace/mode/javascript');
                         editorCSS.$blockScrolling = true;
-                        editorCSS.setValue(wrapperCSS);
+                        editorCSS.setValue(wrapperCSS || '');
                         editorCSS.getSession().on('change', function() {
                             onChange();
                         });
@@ -102,7 +129,7 @@
         function loadConfigFile(onChange) {
             socket.emit('readFile', 'tileboard.0', 'config.js', function (err, data) {
                 if (!data) {
-                    getDefaultConfig(onChange);
+                    getDefaultConfig(err === ERROR_NOT_EXISTS, onChange);
                 } else {
                     wrapperConfig = data.toString();
                     initEditorConfig(onChange);
@@ -113,6 +140,9 @@
         function loadCSSFile(onChange) {
             socket.emit('readFile', 'tileboard.0', 'custom.css', function (err, data) {
                 wrapperCSS = (data || '').toString();
+                if (err === ERROR_NOT_EXISTS) {
+                    socket.emit('writeFile', 'tileboard.0', 'custom.css', '');
+                }
                 initEditorCSS(onChange);
             });
         }
@@ -130,7 +160,7 @@
         }
 
         function initSelectId (cb) {
-            if (selectId) return selectId;
+            if (selectId) return cb ? cb(selectId) : selectId;
             socket.emit('getObjects', function (err, res) {
                 if (!err && res) {
                     selectId = $('#dialog-select-member').selectId('init',  {
@@ -169,19 +199,85 @@
         function load(settings, onChange) {
             if (!settings) return;
 
-            loadConfigFile(onChange);
-            loadCSSFile(onChange);
+            socket.emit('getObject', 'tileboard.0.control.command', function (err, obj) {
+                if (!obj) {
+                    socket.emit('setObject', 'tileboard.0.control.command', {
+                        "_id": 'tileboard.0.control.command',
+                        "type": "state",
+                        "common": {
+                            "name": "Command for TileBoard",
+                            "type": "string",
+                            "desc": "Writing this variable act as the trigger. Instance and data must be preset before 'command' will be written. 'changedView' will be signalled too",
+                            "states": {
+                                "alert": "alert",
+                                "changeView": "changeView",
+                                "refresh": "refresh",
+                                "reload": "reload",
+                                "popup": "popup",
+                                "playSound": "playSound"
+                            }
+                        },
+                        "native": {}
+                    });
+                    socket.emit('setObject', 'tileboard.0.control.instance', {
+                        "_id": "tileboard.0.control.instance",
+                        "type": "state",
+                        "common": {
+                            "name": "Control TileBoard",
+                            "type": "string",
+                            "desc": "Write here browser instance ID to control or '*' to control all instances"
+                        },
+                        "native": {}
+                    });
+
+                    socket.emit('setObject', 'tileboard.0.control.data',         {
+                            "_id": "tileboard.0.control.data",
+                            "type": "state",
+                            "common": {
+                                "name": "Data for control TileBoard",
+                                "type": "string",
+                                "desc": "Used for: alert, changeView, dialog, popup, playSound, changedView"
+                            },
+                            "native": {}
+                        }
+                    );
+                }
+            });
+
+            // init default
+            socket.emit('readFile', 'tileboard.0', 'custom.css', function (err, data) {
+                // Initialize files
+                if (err === ERROR_NOT_EXISTS) {
+                    socket.emit('writeFile', 'tileboard.0', 'custom.css', '');
+                    getDefaultConfig(true, onChange);
+                }
+            });
+
+            $('.tab-js').on('click', function () {
+                loadConfigFile(onChange);
+            });
+            $('.tab-css').on('click', function () {
+                loadCSSFile(onChange);
+            });
 
             $('.select-id').on('click', function () {
                 initSelectId(function (sid) {
                     sid.selectId('show', '', function (newId) {
                         console.log(newId);
                     });
+                    setTimeout(function () {
+                        $('#dialog-select-member')[0].style.height = 'calc(100% - 100px) !important';
+                    }, 550);
                 });
             });
 
             onChange(false);
             // M.updateTextFields();  // function Materialize.updateTextFields(); to reinitialize all the Materialize labels on the page if you are dynamically adding inputs.
+        }
+
+        function onSaveFinished(callback) {
+            socket.emit('setState', 'tileboard.0.control.command', JSON.stringify({instance: '*', command: 'refresh'}));
+            callback({});
         }
 
         // ... and the function save has to exist.
@@ -191,13 +287,13 @@
             if (editorConfig) {
                 wait++;
                 saveConfigFile(editorConfig.getValue(), function () {
-                    if (!--wait) callback({});
+                    (!--wait) && onSaveFinished(callback);
                 });
             }
             if (editorCSS) {
                 wait++;
                 saveCSSFile(editorCSS.getValue(), function () {
-                    if (!--wait) callback({});
+                    (!--wait) && onSaveFinished(callback);
                 });
             }
 
@@ -212,14 +308,19 @@
         <div class="col s12">
             <ul class="tabs">
                 <li class="tab col s4"><a href="#tab-main"  class="translate active">Main settings</a></li>
-                <li class="tab col s4 tab-json"><a href="#tab-js"    class="translate">Configuration file</a></li>
-                <li class="tab col s4 tab-json"><a href="#tab-css"    class="translate">Custom CSS</a></li>
+                <li class="tab col s4 tab-js"><a href="#tab-js"    class="translate">Configuration file</a></li>
+                <li class="tab col s4 tab-css"><a href="#tab-css"    class="translate">Custom CSS</a></li>
             </ul>
         </div>
         <div id="tab-main" class="col s12 page">
             <div class="row">
                 <div class="col s6 m4 l2">
-                    <img src="tileboard.png" class="logo">
+                    <img src="tileboard.png" class="logo" alt="logo"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <span class="translate">instructions</span>
                 </div>
             </div>
             <!--div class="row">
@@ -258,15 +359,15 @@
                 </div>
             </div-->
         </div>
-        <div id="tab-js" class="col s12 page" style="position: relative; width: 100%; height: calc(100% - 70px); overflow: hidden">
+        <div id="tab-js" class="col s12 page" style="position: relative; width: 100%; height: calc(100% - 50px); overflow: hidden">
             <a class="waves-effect waves-light btn select-id"><span class="translate">Select ID</span></a><br>
             <div id="wrapperConfig">Wrapper-Configuration</div>
         </div>
-        <div id="tab-css" class="col s12 page" style="width: 100%; height: calc(100% - 70px); overflow: hidden">
+        <div id="tab-css" class="col s12 page" style="position: relative; width: 100%; height: calc(100% - 50px); overflow: hidden">
             <div id="wrapperCSS">Wrapper-CSS</div>
         </div>
     </div>
-    <div id="dialog-select-member" style="display: none"></div>
+    <div id="dialog-select-member" style="display: none;"></div>
 </div>
 </body>
 
