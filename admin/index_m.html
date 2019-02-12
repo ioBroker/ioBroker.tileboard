@@ -263,7 +263,7 @@
             $('.select-id').on('click', function () {
                 initSelectId(function (sid) {
                     sid.selectId('show', '', function (newId) {
-                        console.log(newId);
+                        newId && editorConfig.session.insert(editor.getCursorPosition(), newId);
                     });
                     setTimeout(function () {
                         $('#dialog-select-member')[0].style.height = 'calc(100% - 100px) !important';
