@@ -80,6 +80,21 @@
       </div>
    </div>
 
+   <div class="iframe-popup"
+        ng-class="itemField('iframeClasses', activeIframe, entity)"
+        ng-if="activeIframe && (entity = getItemEntity(activeIframe))">
+      <div class="iframe-popup-container" ng-style="getPopupIframeStyles()">
+         <div class="iframe-popup--iframe">
+            <iframe ng-src="{{ itemField('url', activeIframe, entity) }}"
+                    iframe-tile="activeIframe" frameborder="0"></iframe>
+         </div>
+
+         <div class="iframe-popup--close" ng-click="closePopupIframe()">
+            <i class="mdi mdi-close"></i>
+         </div>
+      </div>
+   </div>
+
    <div class="door-entry-popup"
         ng-if="activeDoorEntry && (page = activeDoorEntry.layout.page)
             && (cameraEntity = getEntryCameraEntity(activeDoorEntry))">
@@ -266,9 +281,9 @@
 </div>
 
 <div class="screensaver" ng-click="hideScreensaver()"
-     ng-show="isShowed" ng-controller="Screensaver"  ng-style="conf.styles">
+     ng-show="isShown" ng-controller="Screensaver"  ng-style="conf.styles">
 
-   <div class="screensaver-slides" ng-if="isShowed">
+   <div class="screensaver-slides" ng-if="isShown">
       <div class="screensaver-slide" ng-style="getSlideStyle(slide)"
            ng-class="getSlideClasses($index, slide)"
            ng-repeat="slide in slides track by $index">
@@ -287,7 +302,7 @@
       </div>
    </div>
 
-   <div class="screensaver-content" ng-if="isShowed">
+   <div class="screensaver-content" ng-if="isShown">
       <div class="screensaver-content--right-bottom" ng-if="conf.rightBottom">
          <div header-item ng-repeat="item in conf.rightBottom track by $index"></div>
       </div>
@@ -361,7 +376,8 @@
 <!-- HEADER ITEMS TEMPLATE -->
 
 <script type="text/ng-template" id="header-items.html">
-   <div class="header-item" ng-class="'-' + item.type" ng-style="item.styles">
+   <div class="header-item" ng-class="'-' + item.type"
+        ng-style="item.styles" ng-if="!isHidden(item,{})">
       <div ng-if="item.type === HEADER_ITEMS.TIME">
          <clock></clock>
       </div>
@@ -485,7 +501,7 @@
 
          <div class="item-cover">
             <div class="item-cover--button -open"
-                 ng-class="{'-disabled': entity.state === 'open'}"
+                 ng-class="{'-disabled': entity.state === 'open' && (!entity.attributes.current_position || entity.attributes.current_position === 100)}"
                  ng-click="sendCover('open_cover', item, entity)">
                <i class="mdi mdi-arrow-up"></i>
             </div>
@@ -540,6 +556,18 @@
       </div>
 
       <div ng-if="item.type === TYPES.CUSTOM"
+           class="item-entity-container">
+
+         <div ng-if="item.customHtml"
+              ng-bind-html="item.customHtml"></div>
+
+         <div ng-if="!item.customHtml" class="item-entity">
+            <span class="item-entity--icon mdi"
+                  ng-class="entityIcon(item, entity)"></span>
+         </div>
+      </div>
+
+      <div ng-if="item.type === TYPES.POPUP_IFRAME"
            class="item-entity-container">
 
          <div ng-if="item.customHtml"
@@ -638,6 +666,25 @@
             </div>
          </div>
       </div>
+      <div ng-if="item.type === TYPES.DIMMER_SWITCH"
+           class="item-entity-container">
+
+         <div ng-if="entityState(item, entity) && entityState(item, entity) !== 'off'">
+            <div class="item-button -center-right"
+                 ng-click="dimmerAction('plus', $event, item, entity)">
+               <i class="mdi mdi-plus"></i>
+            </div>
+            <div class="item-button -bottom-right"
+                 ng-click="dimmerAction('minus', $event, item, entity)">
+               <i class="mdi mdi-minus"></i>
+            </div>
+         </div>
+
+         <div class="item-entity">
+            <span class="item-entity--icon mdi"
+                  ng-class="entityIcon(item, entity)"></span>
+         </div>
+      </div>
 
       <div ng-if="item.type === TYPES.TEXT_LIST"
            class="item-entity-container">
@@ -712,7 +759,7 @@
            class="item-entity-container -below">
          <div class="item-camera">
             <camera item="item" entity="entity"
-                    freezed="!isPageActive(page) || activeCamera"></camera>
+                    freezed="!isPageActive(page) || activeCamera || screensaverShown"></camera>
          </div>
       </div>
 
@@ -720,7 +767,7 @@
       <div ng-if="item.type === TYPES.CAMERA_THUMBNAIL"
            class="item-entity-container -below">
          <div class="item-camera">
-            <camera-thumbnail freezed="!isPageActive(page) || activeCamera"
+            <camera-thumbnail freezed="!isPageActive(page) || activeCamera || screensaverShown"
                               item="item" entity="entity"></camera-thumbnail>
          </div>
       </div>
@@ -755,7 +802,8 @@
            class="item-entity-container">
 
          <div class="item-iframe">
-            <iframe ng-src="{{ item.url }}" iframe-tile="item" frameborder="0"></iframe>
+            <iframe ng-src="{{ itemField('url', item, entity) }}"
+                    iframe-tile="item" frameborder="0"></iframe>
          </div>
       </div>
 
@@ -1073,7 +1121,7 @@
 
 
 <link rel="stylesheet" async
-      href="https://cdn.materialdesignicons.com/3.2.89/css/materialdesignicons.min.css">
+      href="https://cdn.materialdesignicons.com/3.3.92/css/materialdesignicons.min.css">
 
 </body>
 </html>

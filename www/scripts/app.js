@@ -21,6 +21,8 @@ var CUSTOM_THEMES = {
    MOBILE: "mobile",
    COMPACT: "compact",
    HOMEKIT: "homekit",
+   FRESH_AIR: "fresh-air",
+   WHITE_PAPER: "white-paper",
 };
 
 var PASSWORD_TYPES = {};
@@ -54,7 +56,9 @@ var TYPES = {
    CUSTOM: 'custom',
    ALARM: 'alarm',
    WEATHER_LIST: 'weather_list',
-   VACUUM: 'vacuum'
+   VACUUM: 'vacuum',
+   POPUP_IFRAME: 'popup_iframe',
+   DIMMER_SWITCH: 'dimmer_switch',
 };
 
 var HEADER_ITEMS = {

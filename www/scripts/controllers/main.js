@@ -2,13 +2,14 @@ App.controller('Main', ['$scope', '$location', MainController]);
 
 function MainController ($scope, $location) {
    if(!window.CONFIG) return;
-
+   
    $scope.pages = CONFIG.pages;
    $scope.TYPES = TYPES;
    $scope.FEATURES = FEATURES;
    $scope.HEADER_ITEMS = HEADER_ITEMS;
 
    $scope.activeSelect = null;
+   $scope.screensaverShown = false;
    $scope.ready = false;
 
    $scope.errors = [];
@@ -19,6 +20,7 @@ function MainController ($scope, $location) {
 
    $scope.activeCamera = null;
    $scope.activeDoorEntry = null;
+   $scope.activeIframe = null;
 
    $scope.alarmCode = null;
    $scope.activeAlarm = null;
@@ -31,6 +33,7 @@ function MainController ($scope, $location) {
    var mainStyles = {};
    var activePage = null;
    var cameraList = null;
+   var popupIframeStyles = {};
 
    $scope.entityClick = function (page, item, entity) {
       switch (item.type) {
@@ -60,6 +63,9 @@ function MainController ($scope, $location) {
          case TYPES.ALARM: return $scope.openAlarm(item, entity);
 
          case TYPES.CUSTOM: return $scope.customTileAction(item, entity);
+         case TYPES.DIMMER_SWITCH: return $scope.dimmerToggle(item, entity);
+
+         case TYPES.POPUP_IFRAME: return $scope.openPopupIframe(item, entity);
 
          case TYPES.INPUT_DATETIME: return $scope.openDatetime(item, entity);
       }
@@ -125,12 +131,12 @@ function MainController ($scope, $location) {
       if(typeof item.id === "object") return item.id;
 
       if(!(item.id in $scope.states)) {
-         if (typeof Api.getState === 'function') {
-            Api.getState(item.id);
-         } else {
-            warnUnknownItem(item);
-         }
-         return null;
+          if (typeof Api.getState === 'function') {
+              Api.getState(item.id);
+          } else {
+              warnUnknownItem(item);
+          }
+          return null;
       }
 
       return $scope.states[item.id];
@@ -180,7 +186,7 @@ function MainController ($scope, $location) {
             var pt = coords + ',' + icon;
 
             url = "https://static-maps.yandex.ru/1.x/?lang=en-US&ll="
-                + coords + "&z=" + zoom + "&l=map&size=" + sizes + "&pt=" + pt;
+               + coords + "&z=" + zoom + "&l=map&size=" + sizes + "&pt=" + pt;
          }
          else {
             coords = obj.latitude + ',' + obj.longitude;
@@ -190,7 +196,7 @@ function MainController ($scope, $location) {
             var marker = encodeURIComponent("color:gray|label:"+label+"|" + coords);
 
             url = "https://maps.googleapis.com/maps/api/staticmap?center="
-                + coords + "&zoom="+zoom+"&size="+sizes+"x&maptype=roadmap&markers=" + marker;
+               + coords + "&zoom="+zoom+"&size="+sizes+"&scale=2&maptype=roadmap&markers=" + marker;
 
             if(CONFIG.googleApiKey) {
                url += "&key=" + CONFIG.googleApiKey;
@@ -214,8 +220,8 @@ function MainController ($scope, $location) {
          type: Noty.WARNING,
          title: 'Head deprecated',
          message: 'Head is deprecated, please replace it with "header" object. ' +
-             '<br> More info <a href="https://github.com/resoai/TileBoard/wiki/Header-configuration">' +
-             'https://github.com/resoai/TileBoard/wiki/Header-configuration</a>'
+         '<br> More info <a href="https://github.com/resoai/TileBoard/wiki/Header-configuration">' +
+         'https://github.com/resoai/TileBoard/wiki/Header-configuration</a>'
       });
 
       return true;
@@ -366,7 +372,7 @@ function MainController ($scope, $location) {
          }
          if(res) for(var k in res) item.styles[k] = res[k];
       }
-
+      
       return item.styles;
    };
 
@@ -454,7 +460,11 @@ function MainController ($scope, $location) {
    };
 
    $scope.entityIcon = function (item, entity) {
-      var state = entity.state;
+      var state = parseFieldValue(entity.state, item, entity);
+
+      if(!state && item.state) {
+         state = parseFieldValue(item.state, item, entity);
+      }
 
       if(item.icon) {
          state = parseFieldValue(item.icon, item, entity);
@@ -553,8 +563,8 @@ function MainController ($scope, $location) {
          icon = $scope.getWeatherField('icon', item, entity);
 
          if(icon) console.warn(
-             "`icon` field inside fields is deprecated for WEATHER tile, " +
-             "please move it to the tile object");
+            "`icon` field inside fields is deprecated for WEATHER tile, " +
+            "please move it to the tile object");
       }
 
       if(!icon) return null;
@@ -565,8 +575,8 @@ function MainController ($scope, $location) {
          map = item.fields.iconMap;
 
          if(icon) console.warn(
-             "`iconMap` field inside fields is deprecated for WEATHER tile, " +
-             "please move it to the tile object as `icons`");
+            "`iconMap` field inside fields is deprecated for WEATHER tile, " +
+            "please move it to the tile object as `icons`");
       }
 
       if(typeof map === "function") return callFunction(map, [icon, item, entity]);
@@ -928,7 +938,29 @@ function MainController ($scope, $location) {
       }, callback);
    };
 
+   $scope.dimmerToggle = function (item, entity, callback) {
+      if(item.action) {
+         callFunction(item.action, [item, entity, callback]);
+      }
+      else if(angular.isString(item.id) && entity) {
+         $scope.toggleSwitch(item, entity, callback);
+      }
+   };
+
+   $scope.dimmerAction = function (action, $event, item, entity) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      var func = "action" + (action === "plus" ? "Plus" : "Minus");
+
+      if(item[func]) callFunction(item[func], [item, entity, $event]);
+
+      return false;
+   };
+
    $scope.toggleLock = function (item, entity) {
+      var service;
+
       if(entity.state === "locked") service = "unlock";
       else if(entity.state === "unlocked") service = "lock";
 
@@ -943,6 +975,7 @@ function MainController ($scope, $location) {
    };
 
    $scope.toggleVacuum = function (item, entity) {
+      var service;
       if(entity.state === "off") service = "turn_on";
       else if(entity.state === "on") service = "turn_off";
       else if(['idle', 'docked', 'paused'].indexOf(entity.state) !== -1) {
@@ -1303,16 +1336,6 @@ function MainController ($scope, $location) {
 
       activePage = page;
 
-      // Inform server, that page was changed
-      Api.send({
-         type: "call_service",
-         domain: "tileboard",
-         service: "set_page",
-         service_data: {
-            page: page
-         }
-      });
-
       if(CONFIG.transition === TRANSITIONS.SIMPLE) {
 
       }
@@ -1329,7 +1352,7 @@ function MainController ($scope, $location) {
    $scope.openCamera = function (item) {
       $scope.activeCamera = item;
    };
-
+   
    $scope.closeCamera = function () {
       $scope.activeCamera = null;
    };
@@ -1351,10 +1374,27 @@ function MainController ($scope, $location) {
       $scope.datetimeString = null;
    };
 
-   $scope.closeDoorEntry = function () {
-      $scope.activeDoorEntry = null;
+   $scope.getPopupIframeStyles = function () {
+      if(!$scope.activeIframe || !$scope.activeIframe.iframeStyles) return null;
 
-      if(doorEntryTimeout) clearTimeout(doorEntryTimeout);
+      var entity = $scope.getItemEntity($scope.activeIframe);
+
+      var styles = $scope.itemField('iframeStyles', $scope.activeIframe, entity);
+
+      if(!styles) return null;
+
+      for (var k in popupIframeStyles) delete popupIframeStyles[k];
+      for (k in styles) popupIframeStyles[k] = styles[k];
+
+      return popupIframeStyles;
+   };
+
+   $scope.openPopupIframe = function (item, entity) {
+      $scope.activeIframe = item;
+   };
+
+   $scope.closePopupIframe = function () {
+      $scope.activeIframe = null;
    };
 
    $scope.openDoorEntry = function (item, entity) {
@@ -1369,6 +1409,12 @@ function MainController ($scope, $location) {
             updateView();
          }, CONFIG.doorEntryTimeout * 1000);
       }
+   };
+
+   $scope.closeDoorEntry = function () {
+      $scope.activeDoorEntry = null;
+
+      if(doorEntryTimeout) clearTimeout(doorEntryTimeout);
    };
 
    $scope.openAlarm = function (item) {
@@ -1390,7 +1436,7 @@ function MainController ($scope, $location) {
          (page.groups || []).forEach(function (group) {
             (group.items || []).forEach(function (item) {
                if([TYPES.CAMERA, TYPES.CAMERA_THUMBNAIL]
-                   .indexOf(item.type) !== -1) {
+                     .indexOf(item.type) !== -1) {
                   res.push(item);
                }
             })
@@ -1538,7 +1584,7 @@ function MainController ($scope, $location) {
    $scope.clearCharDatetime = function () {
       if($scope.datetimeString) {
          $scope.datetimeString = $scope.datetimeString
-             .slice(0, $scope.datetimeString.length - 1);
+            .slice(0, $scope.datetimeString.length - 1);
       }
    };
 
@@ -1652,8 +1698,8 @@ function MainController ($scope, $location) {
    });
 
    $scope.$watchGroup([
-      'activePage.scrolledVertically',
-      'activePage.scrolledHorizontally',
+     'activePage.scrolledVertically',
+     'activePage.scrolledHorizontally',
    ], updateView);
 
    function calcGroupSizes (group) {
@@ -1677,7 +1723,8 @@ function MainController ($scope, $location) {
       return {
          states: $scope.states,
          $scope: $scope,
-         parseFieldValue: parseFieldValue.bind(this)
+         parseFieldValue: parseFieldValue.bind(this),
+         apiRequest: apiRequest.bind(this),
       };
    }
 
@@ -1685,6 +1732,14 @@ function MainController ($scope, $location) {
       if(typeof func !== "function") return func;
 
       return func.apply(getContext(), args || []);
+   }
+
+   function apiRequest (data, callback) {
+      Api.send(data, function (res) {
+         updateView();
+
+         if(callback) callback(res);
+      });
    }
 
    function sendItemData (item, data, callback) {
@@ -1743,7 +1798,7 @@ function MainController ($scope, $location) {
 
    function escapeClass (text) {
       return text && typeof text === "string"
-          ? text.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'non';
+         ? text.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'non';
    }
 
    function getEntityAttr (str) {
@@ -1779,16 +1834,16 @@ function MainController ($scope, $location) {
       for(var k in state) $scope.states[key][k] = state[k];
    }
 
-   // required for lazy load of the states, becasue every update of the single state cause the request of all states again.
-   // To avoid that all states must be updated at once and only then updateView should be called.
-   function setNewStates (states) {
-      states.forEach(function (state) {
-         if(!$scope.states[state.entity_id]) $scope.states[state.entity_id] = state.new_state;
+    // required for lazy load of the states, becasue every update of the single state cause the request of all states again.
+    // To avoid that all states must be updated at once and only then updateView should be called.
+    function setNewStates (states) {
+        states.forEach(function (state) {
+            if(!$scope.states[state.entity_id]) $scope.states[state.entity_id] = state.new_state;
 
-         // Is it required? If $scope.states[key] just assigned?
-         for(var k in state.new_state) $scope.states[state.entity_id][k] = state.new_state[k];
-      });
-   }
+            // Is it required? If $scope.states[key] just assigned?
+            for(var k in state.new_state) $scope.states[state.entity_id][k] = state.new_state[k];
+        });
+    }
 
    function checkStatesTriggers (key, state) {
       checkAlarmState(key, state);
@@ -1827,13 +1882,13 @@ function MainController ($scope, $location) {
             debugLog('state change', event.data.entity_id, event.data.new_state);
 
             if (event.data instanceof Array) {
-               setNewStates(event.data);
-               event.data.forEach(function (state) {
-                  checkStatesTriggers(state.entity_id, state.new_state);
-               });
+                setNewStates(event.data);
+                event.data.forEach(function (state) {
+                    checkStatesTriggers(state.entity_id, state.new_state);
+                });
             } else {
-               setNewState(event.data.entity_id, event.data.new_state);
-               checkStatesTriggers(event.data.entity_id, event.data.new_state);
+                setNewState(event.data.entity_id, event.data.new_state);
+                checkStatesTriggers(event.data.entity_id, event.data.new_state);
             }
          }
          else if (event.event_type === "tileboard") {
@@ -1847,7 +1902,7 @@ function MainController ($scope, $location) {
    }
 
    function addError (error) {
-      if(!CONFIG.ignoreErrors) Noty.addObject({
+       if(!CONFIG.ignoreErrors) Noty.addObject({
          type: Noty.ERROR,
          title: 'Error',
          message: error,
@@ -1856,12 +1911,12 @@ function MainController ($scope, $location) {
    }
 
    function warnUnknownItem(item) {
-      if(!CONFIG.ignoreErrors) Noty.addObject({
-         type: Noty.WARNING,
-         title: 'Entity not found',
-         message: 'Entity "' + item.id + '" not found',
-         id: item.id
-      });
+       if(!CONFIG.ignoreErrors) Noty.addObject({
+           type: Noty.WARNING,
+           title: 'Entity not found',
+           message: 'Entity "' + item.id + '" not found',
+           id: item.id
+       });
    }
 
    function debugLog () {
@@ -1876,6 +1931,11 @@ function MainController ($scope, $location) {
 
    window.openPage = function (page) {
       $scope.openPage(page);
+      updateView();
+   };
+
+   window.setScreensaverShown = function (state) {
+      $scope.screensaverShown = state;
       updateView();
    };
 }

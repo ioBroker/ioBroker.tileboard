@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "tileboard",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Visualisation",
         "titleLang": {
             "en": "Visualisation with TileBoard",
@@ -16,6 +16,18 @@
             "zh-cn": "使用TileBoard进行可视化"
         },
         "news": {
+            "0.1.1": {
+                "en": "Changes of the original tileboard were merged",
+                "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",
+                "ru": "Изменения оригинальной tileboard были объединены",
+                "pt": "Mudanças do tileboard original foram fundidas",
+                "nl": "Wijzigingen van de originele tileboard zijn samengevoegd",
+                "fr": "Les modifications du tileboard de mosaïque d'origine ont été fusionnées",
+                "it": "Le modifiche del tileboard originale sono state unite",
+                "es": "Se fusionaron los cambios del tileboard original.",
+                "pl": "Zmiany w oryginalnym tileboard zostały scalone",
+                "zh-cn": "原始拼贴板的更改已合并"
+            },
             "0.1.0": {
                 "en": "initial commit",
                 "de": "anfängliches Commit",

@@ -57,6 +57,9 @@ setState('tileboard.0.control.command', JSON.stringify({
 ```
 
 ## Changelog
+### 0.1.1 (2019-02-12)
+* (bluefox) Changes of the original tileboard were merged
+
 ### 0.1.0 (2019-01-16)
 * (bluefox) initial commit
 
