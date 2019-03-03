@@ -33,9 +33,10 @@
     "chai": "^4.2.0",
     "gulp": "^4.0.0",
     "gulp-replace": "^1.0.0",
-    "mocha": "^5.2.0",
+    "mocha": "^6.0.2",
     "request": "^2.88.0",
-    "unzip": "^0.1.11"
+    "unzip": "^0.1.11",
+    "@iobroker/adapter-core": "^1.0.3"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.tileboard/issues"
