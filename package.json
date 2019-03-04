@@ -35,8 +35,7 @@
     "gulp-replace": "^1.0.0",
     "mocha": "^6.0.2",
     "request": "^2.88.0",
-    "unzip": "^0.1.11",
-    "@iobroker/adapter-core": "^1.0.3"
+    "unzip": "^0.1.11"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.tileboard/issues"
@@ -46,5 +45,8 @@
     "build": "node node_modules/gulp/bin/gulp.js",
     "prepare": "node node_modules/gulp/bin/gulp.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@iobroker/adapter-core": "^1.0.3"
+  }
 }
