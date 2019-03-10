@@ -2,7 +2,7 @@
 # ioBroker.tileboard
 ============
 
-[![NPM version](http://img.shields.io/npm/v/iobroker.tileboard.svg)](https://www.npmjs.com/package/iobroker.tileboard)
+![Number of Installations](http://iobroker.live/badges/tileboard-installed.svg) ![Number of Installations](http://iobroker.live/badges/tileboard-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.tileboard.svg)](https://www.npmjs.com/package/iobroker.tileboard)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.tileboard.svg)](https://www.npmjs.com/package/iobroker.tileboard)
 
 [![NPM](https://nodei.co/npm/iobroker.tileboard.png?downloads=true)](https://nodei.co/npm/iobroker.tileboard/)
