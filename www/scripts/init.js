@@ -1,4 +1,4 @@
-var App = angular.module('App', ['pr.longpress']);
+var App = angular.module('App', ['pr.longpress', 'colorpicker']);
 
 App.config(function($sceProvider) {
    $sceProvider.enabled(false);
@@ -17,6 +17,11 @@ if(!window.CONFIG) {
       'If you running TileBoard for the first time, please rename "config.example.js" to "config.js"';
 
    alert(error);
+}
+
+// small fix for new parameter (IoB)
+if (window.CONFIG) {
+    window.CONFIG.serverUrl = window.CONFIG.serverUrl || '';
 }
 
 var Api = typeof HApi !== 'undefined' ? new HApi(CONFIG.wsUrl, CONFIG.authToken) : new IoBApi();

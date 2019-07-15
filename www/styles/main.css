@@ -149,6 +149,13 @@ body {
   color: #444;
   background-color: #1a4957;
 }
+body {
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 .errors-container {
   position: fixed;
   bottom: 30px;
@@ -219,7 +226,7 @@ body {
   font-size: 64px;
   margin-left: 15px;
 }
-@media screen and (max-height: 770px) {
+@media screen and (max-height: 770px) { // IoB
   .header {
     display: none;
   }
@@ -1276,6 +1283,14 @@ camera-thumbnail div {
 .datetime-popup-button.-success:active {
   background: #0f341a;
 }
+.alarm-popup-button.-night,
+.datetime-popup-button.-night {
+  background: #6c2738;
+}
+.alarm-popup-button.-night:active,
+.datetime-popup-button.-night:active {
+  background: #3f101b;
+}
 .alarm-popup-button.-disabled,
 .datetime-popup-button.-disabled {
   background: #444;
@@ -1325,6 +1340,18 @@ camera-thumbnail div {
 .item-slider-title {
   text-align: left;
   font-size: 0.9em;
+}
+.item-entity-colorpicker {
+  text-align: left;
+  font-size: 0.9em;
+  margin: 10px 5px 0;
+}
+.item-entity-colorpicker input {
+  width: 15px;
+  height: 15px;
+  box-sizing: border-box;
+  margin: 0;
+  cursor: pointer;
 }
 .item-entity-sliders {
   position: absolute;

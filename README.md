@@ -1,6 +1,5 @@
 ![Logo](admin/tileboard.png)
 # ioBroker.tileboard
-============
 
 ![Number of Installations](http://iobroker.live/badges/tileboard-installed.svg) ![Number of Installations](http://iobroker.live/badges/tileboard-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.tileboard.svg)](https://www.npmjs.com/package/iobroker.tileboard)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.tileboard.svg)](https://www.npmjs.com/package/iobroker.tileboard)
@@ -57,6 +56,9 @@ setState('tileboard.0.control.command', JSON.stringify({
 ```
 
 ## Changelog
+### 0.2.0 (2019-07-15)
+* (bluefox) Changes of the original tileboard were merged
+
 ### 0.1.1 (2019-02-12)
 * (bluefox) Changes of the original tileboard were merged
 

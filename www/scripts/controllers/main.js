@@ -130,7 +130,7 @@ function MainController ($scope, $location) {
    $scope.getItemEntity = function (item) {
       if(typeof item.id === "object") return item.id;
 
-      if(!(item.id in $scope.states)) {
+      if(!(item.id in $scope.states)) { // IoB
           if (typeof Api.getState === 'function') {
               Api.getState(item.id);
           } else {
@@ -188,6 +188,28 @@ function MainController ($scope, $location) {
             url = "https://static-maps.yandex.ru/1.x/?lang=en-US&ll="
                + coords + "&z=" + zoom + "&l=map&size=" + sizes + "&pt=" + pt;
          }
+         else if(item.map === MAPBOX_MAP) {
+            coords = obj.longitude + ',' + obj.latitude;
+            sizes = sizes.replace(',', 'x');
+
+            var label = name[0].toLowerCase();
+            var marker = "pin-s-" + label + "(" + obj.longitude + ',' + obj.latitude + ")";
+            var style = "mapbox/streets-v11";
+
+            if(CONFIG.mapboxStyle) {
+               var styleGroups = /^mapbox:\/\/styles\/(.+)$/.exec(CONFIG.mapboxStyle);
+               if (styleGroups.length > 1) {
+                  style = styleGroups[1];
+               }
+            }
+
+            url = "https://api.mapbox.com/styles/v1/" + style + "/static/"
+               + marker + "/" + coords + "," + zoom + ",0/" + sizes;
+
+            if(CONFIG.mapboxToken) {
+               url += "?access_token=" + CONFIG.mapboxToken;
+            }
+         }
          else {
             coords = obj.latitude + ',' + obj.longitude;
             sizes = sizes.replace(',', 'x');
@@ -196,14 +218,14 @@ function MainController ($scope, $location) {
             var marker = encodeURIComponent("color:gray|label:"+label+"|" + coords);
 
             url = "https://maps.googleapis.com/maps/api/staticmap?center="
-               + coords + "&zoom="+zoom+"&size="+sizes+"&scale=2&maptype=roadmap&markers=" + marker;
+               + coords + "&zoom=" + zoom + "&size=" + sizes + "&scale=2&maptype=roadmap&markers=" + marker;
 
             if(CONFIG.googleApiKey) {
                url += "&key=" + CONFIG.googleApiKey;
             }
          }
 
-         obj[key] = {backgroundImage: 'url(' + url + ')'};
+         obj[key] = {backgroundImage: "url('" + url + "')"};
       }
 
       return obj[key];
@@ -287,7 +309,7 @@ function MainController ($scope, $location) {
          var styles = {};
 
          if(entity.attributes.entity_picture) {
-            styles.backgroundImage = 'url(' + entity.attributes.entity_picture + ')';
+            styles.backgroundImage = 'url(' + CONFIG.serverUrl + entity.attributes.entity_picture + ')';
          }
 
          entity.trackerBg = styles;
@@ -713,12 +735,13 @@ function MainController ($scope, $location) {
 
       var def = item.slider || {};
       var attrs = entity.attributes || {};
-
+      var value = +attrs[def.field] || 0;
+      
       entity.attributes[key] = {
          max: attrs.max || def.max || 100,
          min: attrs.min || def.min || 0,
          step: attrs.step || def.step || 1,
-         value: +entity.state || def.value || 0,
+         value: value || +entity.state || def.value || 0,
          request: def.request || {
             type: "call_service",
             domain: "input_number",
@@ -801,7 +824,7 @@ function MainController ($scope, $location) {
    };
 
    $scope.openLightSliders = function (item, entity) {
-      if(!item.sliders || !item.sliders.length) return;
+      if((!item.sliders || !item.sliders.length) && !item.colorpicker) return;
 
       if(entity.state !== "on") {
          return $scope.toggleSwitch(item, entity, function () {
@@ -853,6 +876,14 @@ function MainController ($scope, $location) {
       return (features | feature) === features;
    };
 
+   $scope.isDisarmed = function (entity) {
+      if(['disarmed'].indexOf(entity.state) === -1) {
+         return true;
+      }
+
+      return false;
+   };
+
    $scope.shouldShowVolumeSlider = function (entity) {
       return $scope.supportsFeature(FEATURES.MEDIA_PLAYER.VOLUME_SET, entity)
           && ('volume_level' in entity.attributes)
@@ -868,7 +899,7 @@ function MainController ($scope, $location) {
 
 
    // Actions
-   // Todo the debounce configurable, because 250ms can overload the end device with requests.
+   // IoB: Todo the debounce configurable, because 250ms can overload the end device with requests.
    var setSliderValue = debounce(setSliderValueFn, 250);
 
    function setSliderValueFn (item, entity, value) {
@@ -1140,6 +1171,46 @@ function MainController ($scope, $location) {
          }
       });
    };
+
+   $scope.getRGBStringFromArray = function( color ) {
+      if(!color) return null;
+      return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
+   };
+
+   $scope.getRGBArrayFromString = function( color ) {
+      if(!color || color.indexOf("rgb") !== 0) return null;
+
+      var colorValues;
+
+      if (color.indexOf("rgba") === 0) {
+         colorValues = color.substring(color.indexOf("(") + 1, color.lastIndexOf(",")).split(",");
+      }
+      else {
+         colorValues = color.substring(color.indexOf("(") + 1, color.indexOf(")")).split(",");
+      }
+
+      return [parseInt(colorValues[0]), parseInt(colorValues[1]), parseInt(colorValues[2])];
+   };
+
+   $scope.setLightColor = function (item, color) {
+      if(item.loading) return;
+
+      var colors = $scope.getRGBArrayFromString(color);
+
+      if(colors) sendItemData(item, {
+         type: "call_service",
+         domain: "light",
+         service: "turn_on",
+         service_data: {
+            entity_id: item.id,
+            rgb_color: colors
+         }
+      });
+   };   
+
+   $scope.$on('colorpicker-colorupdated', function (event, data) {
+      $scope.setLightColor(data.item, data.color);
+   });
 
    $scope.setInputNumber = function (item, value) {
       if(item.loading) return;
@@ -1642,6 +1713,8 @@ function MainController ($scope, $location) {
 
    /// INIT
 
+   var realReadyState = false;
+
    Api.onError(function (data) {
       console.error(data);
       addError(data.message);
@@ -1670,6 +1743,7 @@ function MainController ($scope, $location) {
          }
 
          $scope.ready = true;
+         realReadyState = true;
 
          var pageNum = $location.hash();
 
@@ -1684,9 +1758,19 @@ function MainController ($scope, $location) {
    });
 
    Api.onUnready(function () {
-      $scope.ready = false;
+      realReadyState = false;
 
-      updateView();
+      //$scope.ready = false;
+
+      //we give a timeout to prevent blinking (if reconnected)
+      setTimeout(function () {
+         if(realReadyState === false) {
+            $scope.ready = false;
+            updateView();
+         }
+      }, 1000);
+
+      //updateView();
    });
 
    Api.onMessage(function (data) {
@@ -1829,12 +1913,11 @@ function MainController ($scope, $location) {
 
    function setNewState (key, state) {
       if(!$scope.states[key]) $scope.states[key] = state;
-
-      // Is it required? If $scope.states[key] just assigned in the previous line?
+  
       for(var k in state) $scope.states[key][k] = state[k];
    }
 
-    // required for lazy load of the states, becasue every update of the single state cause the request of all states again.
+    // IoB - required for lazy load of the states, becasue every update of the single state cause the request of all states again.
     // To avoid that all states must be updated at once and only then updateView should be called.
     function setNewStates (states) {
         states.forEach(function (state) {
@@ -1881,7 +1964,7 @@ function MainController ($scope, $location) {
          if (event.event_type === "state_changed") {
             debugLog('state change', event.data.entity_id, event.data.new_state);
 
-            if (event.data instanceof Array) {
+            if (event.data instanceof Array) { // IoB
                 setNewStates(event.data);
                 event.data.forEach(function (state) {
                     checkStatesTriggers(state.entity_id, state.new_state);
@@ -1936,6 +2019,55 @@ function MainController ($scope, $location) {
 
    window.setScreensaverShown = function (state) {
       $scope.screensaverShown = state;
+
       updateView();
    };
+
+   function pingConnection () {
+      if(!$scope.ready || realReadyState === false) return; // no reason to ping if unready was fired
+
+      var timeout = 3000;
+
+      var success = false;
+
+      Api.sendPing(function (res) {
+         if('id' in res) success = true;
+      });
+
+      setTimeout(function () {
+         if(success) return;
+
+         realReadyState = false;
+
+         var noty = Noty.addObject({
+            type: Noty.WARNING,
+            title: 'Ping unsuccessful',
+            message: 'Trying to reconnect',
+         });
+
+         Api.forceReconnect();
+
+         var destroy = Api.onReady(function () {
+            destroy();
+
+            if(noty) noty.remove();
+
+            Noty.addObject({
+               type: Noty.SUCCESS,
+               title: 'Reconnection',
+               message: 'Reconnection successful',
+               lifetime: 1,
+            });
+
+         });  
+      }, timeout);
+   }
+
+   if(CONFIG.pingConnection !== false) {
+      setInterval(pingConnection, 5000);
+
+      window.addEventListener("focus", function () {
+         pingConnection();
+      });
+   }
 }

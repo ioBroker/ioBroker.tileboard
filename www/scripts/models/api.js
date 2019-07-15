@@ -100,6 +100,10 @@ var IoBApi = (function () {
                 self._conn.setState(id, true, function (err) {
                     callback && callback();
                 });
+            } else if (data.service === 'turn_off') {
+                self._conn.setState(id, false, function (err) {
+                    callback && callback();
+                });
             } else if(data.service === 'set_page') {
                 if (typeof data.service_data.page === 'object') {
                     self._conn.setState(self._conn.namespace + '.control.data', {
@@ -145,7 +149,7 @@ var IoBApi = (function () {
 
     $Api.prototype.subscribeEvents = function (events, callback) {
         var self = this;
-        if(events && typeof events === 'object') {
+        if (events && typeof events === 'object') {
             events.forEach(function (event) {
                 self.subscribeEvent(event, callback);
             })

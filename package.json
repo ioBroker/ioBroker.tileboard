@@ -1,7 +1,7 @@
 {
   "name": "iobroker.tileboard",
   "description": "Graphical user interface for ioBroker based on TileBoard",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "bluefox",
     "email": "dogafox@gmail.com"
@@ -31,9 +31,9 @@
   ],
   "devDependencies": {
     "chai": "^4.2.0",
-    "gulp": "^4.0.0",
+    "gulp": "^4.0.2",
     "gulp-replace": "^1.0.0",
-    "mocha": "^6.0.2",
+    "mocha": "^6.1.4",
     "request": "^2.88.0",
     "unzip": "^0.1.11"
   },
