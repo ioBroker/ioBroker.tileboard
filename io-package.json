@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "tileboard",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Visualisation",
         "titleLang": {
             "en": "Visualisation with TileBoard",
@@ -16,6 +16,18 @@
             "zh-cn": "使用TileBoard进行可视化"
         },
         "news": {
+            "0.2.1": {
+                "en": "fixed pingConnection",
+                "de": "feste pingConnection",
+                "ru": "исправлено соединение pingConnection",
+                "pt": "pingConnection fixo",
+                "nl": "vaste pingConnection",
+                "fr": "pingConnection fixe",
+                "it": "pingConnection fisso",
+                "es": "pingConnection fijo",
+                "pl": "naprawiono pingConnection",
+                "zh-cn": "固定pingConnection"
+            },
             "0.2.0": {
                 "en": "Changes of the original tileboard were merged",
                 "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",

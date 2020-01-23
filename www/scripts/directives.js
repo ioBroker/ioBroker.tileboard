@@ -1,4 +1,3 @@
-
 App.directive('tile', function () {
    return {
       restrict: 'AE',
@@ -31,7 +30,7 @@ App.directive('camera', function () {
          var appendImage = function (url) {
             var el = document.createElement('div');
 
-            if(url) el.style.backgroundImage = 'url(' + CONFIG.serverUrl + url + ')';
+            if(url) el.style.backgroundImage = 'url("' + toAbsoluteServerURL(url) + '")';
 
             el.style.backgroundSize = $scope.item.bgSize || 'cover';
 
@@ -99,7 +98,7 @@ App.directive('camera', function () {
    }
 });
 
-App.directive('cameraThumbnail', function () {
+App.directive('cameraThumbnail', ['Api', function (Api) {
    return {
       restrict: 'AE',
       replace: true,
@@ -170,8 +169,58 @@ App.directive('cameraThumbnail', function () {
          }
       }
    }
-});
+}]);
 
+App.directive('cameraStream', ['Api', function (Api) {
+   return {
+      restrict: 'AE',
+      replace: true,
+      scope: {
+         item: '=item',
+         entity: '=entity',
+         freezed: '=freezed'
+      },
+      link: function ($scope, $el, attrs) {
+         var current = null;
+
+         var appendVideo = function (url) {
+            var el = document.createElement('video');
+            el.style.objectFit = $scope.item.objFit || 'fill';
+            el.style.width = '100%';
+            el.style.height = '100%';
+            el.muted = 'muted';
+
+            var hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(el);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+               el.play();
+            });
+            
+            if(current) $el[0].removeChild(current);
+            $el[0].appendChild(el);
+
+            current = el;
+         };
+
+         var requestStream = function () {
+            if($scope.entity.state === "off") return;
+
+            Api.send({
+                  type: "camera/stream",
+                  entity_id: $scope.entity.entity_id
+               },
+               function (res) {
+                  if(!res.result) return;
+
+                  appendVideo(res.result.url);
+               });
+         };
+         
+         $scope.$watch('entity', requestStream);
+      }
+   }
+}]);
 
 App.directive('clock', ['$interval', function ($interval) {
    return {

@@ -1,7 +1,7 @@
 {
   "name": "iobroker.tileboard",
   "description": "Graphical user interface for ioBroker based on TileBoard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "bluefox",
     "email": "dogafox@gmail.com"
@@ -14,12 +14,6 @@
     "type": "git",
     "url": "https://github.com/ioBroker/ioBroker.tileboard"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/ioBroker/ioBroker.tileboard/blob/master/LICENSE"
-    }
-  ],
   "keywords": [
     "ioBroker",
     "GUI",
@@ -33,7 +27,7 @@
     "chai": "^4.2.0",
     "gulp": "^4.0.2",
     "gulp-replace": "^1.0.0",
-    "mocha": "^6.1.4",
+    "mocha": "^7.0.0",
     "request": "^2.88.0",
     "unzip": "^0.1.11"
   },

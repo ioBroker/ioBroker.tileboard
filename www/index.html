@@ -12,10 +12,14 @@
 
    <title>TileBoard</title>
 
+   <!-- WebApp configuration -->
+   <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+   <!-- legacy tags -->
    <meta name="mobile-web-app-capable" content="yes">
    <!-- iOS Settings -->
    <meta name="apple-mobile-web-app-capable" content="yes">
    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+   <link rel="apple-touch-icon" href="favicon.png">
 
    <link rel="shortcut icon" sizes="16x16 24x24 32x32 48x48 64x64" href="favicon.png">
 
@@ -31,26 +35,34 @@
          'styles/themes.css',
          'styles/weather-icons.css',
          'styles/color-picker.min.css',
-         '../tileboard.0/custom.css',
+         // 'styles/custom.css',     // IoB
+         '../tileboard.0/custom.css' // IoB
       ].map(function (value) {
          document.write('<li'+'nk rel="stylesheet" href="'+value+suffix+'"/>');
       });
 
       [
-         '../../lib/js/socket.io.js',
-         './_socket/info.js',
-         'scripts/vendors/conn.js',
+         '../../lib/js/socket.io.js',  // IoB
+         './_socket/info.js',          // IoB
+         'scripts/vendors/conn.js',    // IoB
          'scripts/vendors/angular.min.js',
-         'scripts/vendors/angular-long-press.js',
+         'scripts/vendors/hammer.js',
+         'scripts/vendors/angular.hammer.js',
          'scripts/vendors/color-picker.js',
+         'scripts/vendors/angularjs-gauge.js',
+         'scripts/vendors/moment.min.js', // Required by Chart.js for time axes
+         'scripts/vendors/Chart.min.js',  // Required for history charts
+         'scripts/vendors/angular-chart.min.js',  // Required for linking charts to angular.js
+         'scripts/vendors/hls.js',
 
-         'scripts/models/api.js',
          'scripts/models/noty.js',
          'scripts/app.js',
 
-         '../tileboard.0/config.js', // <----- NOT config.example.js !!
+         // 'config.js', // <----- NOT config.example.js !!
+         '../tileboard.0/config.js',
 
          'scripts/init.js',
+         'scripts/models/api.js',
          'scripts/directives.js',
          'scripts/controllers/main.js',
          'scripts/controllers/noty.js',
@@ -63,11 +75,24 @@
 
 <body ng-controller="Main" ng-class="getBodyClass()">
 
-<div ng-if="ready" class="page-container">
+<div ng-if="ready" class="page-container"
+     hm-pan="onPagePan($event)"
+     hm-recognizer-options="{
+        enable: isPanEnabled,
+        directions: isMenuOnTheLeft ? 'DIRECTION_VERTICAL' : 'DIRECTION_HORIZONTAL'
+     }"
+>
    <div class="camera-popup"
         ng-if="activeCamera && (entity = getItemEntity(activeCamera))">
 
       <div class="camera-popup-container">
+         <div class="camera-popup-title">
+            <div class="camera-popup-close" ng-click="closeCamera()">
+               <i class="mdi mdi-close"></i>
+            </div>
+            {{ entityTitle(activeCamera, entity) }}
+         </div>
+
          <div class="camera-popup--list">
             <div class="camera-popup--list-item"
                  ng-click="openCamera(item)"
@@ -89,10 +114,11 @@
                <camera-thumbnail item="activeCamera.fullscreen" entity="entity"
                                  freezed="false"></camera-thumbnail>
             </div>
-         </div>
 
-         <div class="camera-popup--close" ng-click="closeCamera()">
-            <i class="mdi mdi-close"></i>
+            <div ng-if="activeCamera.fullscreen.type === TYPES.CAMERA_STREAM">
+               <camera-stream item="activeCamera.fullscreen" entity="entity"
+                              freezed="false"></camera-stream>
+            </div>
          </div>
       </div>
    </div>
@@ -101,13 +127,42 @@
         ng-class="itemField('iframeClasses', activeIframe, entity)"
         ng-if="activeIframe && (entity = getItemEntity(activeIframe))">
       <div class="iframe-popup-container" ng-style="getPopupIframeStyles()">
+         <div class="iframe-popup-title">
+            <div class="iframe-popup-close" ng-click="closePopupIframe()">
+               <i class="mdi mdi-close"></i>
+            </div>
+            {{ entityTitle(activeIframe, entity) }}
+         </div>
          <div class="iframe-popup--iframe">
             <iframe ng-src="{{ itemField('url', activeIframe, entity) }}"
                     iframe-tile="activeIframe" frameborder="0"></iframe>
          </div>
+      </div>
+   </div>
 
-         <div class="iframe-popup--close" ng-click="closePopupIframe()">
-            <i class="mdi mdi-close"></i>
+   <div class="history-popup"
+        ng-class="itemField('history.classes', activeHistory, entity)"
+        ng-if="activeHistory && (entity = getItemEntity(activeHistory.item))">
+      <div class="history-popup-container" ng-style="getPopupHistoryStyles()">
+         <div class="history-popup-title">
+            <div class="history-popup-close" ng-click="closePopupHistory()">
+               <i class="mdi mdi-close"></i>
+            </div>
+            {{ entityTitle(activeHistory.item, entity) }}
+         </div>
+
+         <div class="history-popup-container history-popup-container--canvas">
+            <div class="history-popup--canvas">
+               <div class="history-popup--placeholder">
+                  <span ng-if="activeHistory.isLoading && !activeHistory.errorText">Loading history data...</span>
+                  <span ng-if="activeHistory.errorText">{{ activeHistory.errorText }}</span>
+               </div>
+               <canvas id="history-popup--canvas"
+                  class="chart chart-line"
+                  chart-data="activeHistory.data"
+                  chart-dataset-override="activeHistory.datasetOverride"
+                  chart-options="activeHistory.options"></canvas>
+            </div>
          </div>
       </div>
    </div>
@@ -117,24 +172,34 @@
             && (cameraEntity = getEntryCameraEntity(activeDoorEntry))">
 
       <div class="door-entry-popup-container">
-         <div class="door-entry-popup--camera">
-            <div ng-if="activeDoorEntry.layout.camera.type === TYPES.CAMERA">
-               <camera item="activeDoorEntry.layout.camera" entity="cameraEntity"
-                       freezed="false"></camera>
+         <div class="door-entry-popup-title">
+            <div class="door-entry-popup-close" ng-click="closeDoorEntry()">
+               <i class="mdi mdi-close"></i>
             </div>
-
-            <div ng-if="activeDoorEntry.layout.camera.type === TYPES.CAMERA_THUMBNAIL">
-               <camera-thumbnail item="activeDoorEntry.layout.camera" entity="cameraEntity"
-                                 freezed="false"></camera-thumbnail>
-            </div>
+            {{ entityTitle(activeDoorEntry, entity) }}
          </div>
 
-         <div class="door-entry-popup--tiles">
-            <div tile ng-repeat="item in activeDoorEntry.layout.tiles track by $index"></div>
-         </div>
+         <div class="door-entry-popup-container">
+            <div class="door-entry-popup--camera">
+               <div ng-if="activeDoorEntry.layout.camera.type === TYPES.CAMERA">
+                  <camera item="activeDoorEntry.layout.camera" entity="cameraEntity"
+                          freezed="false"></camera>
+               </div>
 
-         <div class="door-entry-popup--close" ng-click="closeDoorEntry()">
-            <i class="mdi mdi-close"></i>
+               <div ng-if="activeDoorEntry.layout.camera.type === TYPES.CAMERA_THUMBNAIL">
+                  <camera-thumbnail item="activeDoorEntry.layout.camera" entity="cameraEntity"
+                                    freezed="false"></camera-thumbnail>
+               </div>
+
+               <div ng-if="activeDoorEntry.layout.camera.type === TYPES.CAMERA_STREAM">
+                  <camera-stream item="activeDoorEntry.layout.camera" entity="cameraEntity"
+                                    freezed="false"></camera-stream>
+               </div>
+            </div>
+
+            <div class="door-entry-popup--tiles">
+               <div tile ng-repeat="item in activeDoorEntry.layout.tiles track by $index"></div>
+            </div>
          </div>
       </div>
    </div>
@@ -147,7 +212,7 @@
       <div class="alarm-popup-container"
            ng-class="{'-no-code': !alarmEntity.attributes.code_format}">
 
-         <div class="alarm-popup--close" ng-click="closeAlarm()">
+         <div class="alarm-popup-close" ng-click="closeAlarm()">
             <i class="mdi mdi-close"></i>
          </div>
 
@@ -185,17 +250,17 @@
 
             <div class="alarm-popup-buttons-line">
                <div class="alarm-popup-button -icon -home"
-                    ng-if="!isDisarmed(alarmEntity)" 
+                    ng-if="!isDisarmed(alarmEntity)"
                     ng-click="actionAlarm('alarm_arm_home', activeAlarm, alarmEntity)">
                   <div class="mdi mdi-bell-plus"></div> Arm home
                </div>
                <div class="alarm-popup-button -icon -away"
-                    ng-if="!isDisarmed(alarmEntity)" 
+                    ng-if="!isDisarmed(alarmEntity)"
                     ng-click="actionAlarm('alarm_arm_away', activeAlarm, alarmEntity)">
                   <div class="mdi mdi-bell"></div> Arm away
                </div>
                <div class="alarm-popup-button -icon -night"
-                    ng-if="!isDisarmed(alarmEntity)" 
+                    ng-if="!isDisarmed(alarmEntity)"
                     ng-click="actionAlarm('alarm_arm_night', activeAlarm, alarmEntity)">
                   <div class="mdi mdi-sleep"></div> Arm night
                </div>
@@ -215,7 +280,7 @@
       <div class="datetime-popup-overlay" ng-click="closeDatetime()"></div>
 
       <div class="datetime-popup-container">
-         <div class="datetime-popup--close" ng-click="closeDatetime()">
+         <div class="datetime-popup-close" ng-click="closeDatetime()">
             <i class="mdi mdi-close"></i>
          </div>
 
@@ -276,14 +341,15 @@
    <div class="header" ng-if="header = getHeader()"
         ng-include="'header.html'"></div>
 
-   <div class="pages" id="pages">
+   <div class="pages" id="pages" ng-style="pagesContainerStyles">
       <div class="page-overlay" ng-if="activeSelect"
            ng-click="closeActiveSelect()"></div>
 
       <div ng-repeat="page in pages track by $index"
            ng-class="{'-active': isPageActive(page)}"
            ng-if="shouldDrawPage(page) && !isHidden(page)"
-           ng-style="pageStyles(page)" class="page"
+           ng-style="pageStyles(page, $index)" class="page"
+           ng-on-scroll="onPageScroll($event)"
            on-scroll on-scroll-model="page">
 
          <!-- legacy -->
@@ -447,7 +513,8 @@
 <script type="text/ng-template" id="tile.html">
    <div ng-style="itemStyles(page, item, entity)" class="item"
         ng-click="entityClick(page, item, entity)"
-        on-long-press="entityLongClick($event, page, item, entity)"
+        hm-press="entityLongPress($event, page, item, entity)"
+        hm-recognizer-options="{time: 600}"
         ng-if="(entity = getItemEntity(item)) && !isHidden(item, entity)"
         ng-class="itemClasses(item)">
 
@@ -584,7 +651,7 @@
            class="item-entity-container">
 
          <div ng-if="item.customHtml"
-              ng-bind-html="item.customHtml"></div>
+              ng-bind-html="itemCustomHtml(item, entity)"></div>
 
          <div ng-if="!item.customHtml" class="item-entity">
             <span class="item-entity--icon mdi"
@@ -596,7 +663,7 @@
            class="item-entity-container">
 
          <div ng-if="item.customHtml"
-              ng-bind-html="item.customHtml"></div>
+              ng-bind-html="itemCustomHtml(item, entity)"></div>
 
          <div ng-if="!item.customHtml" class="item-entity">
             <span class="item-entity--icon mdi"
@@ -653,11 +720,13 @@
 
          <div ng-if="!item.controlsEnabled">
             <div ng-if="entity.state !== 'off'">
-               <div class="item-button -center-right"
+               <div ng-if="supportsFeature(FEATURES.LIGHT.BRIGHTNESS, entity)"
+                    class="item-button -center-right"
                     ng-click="increaseBrightness($event, item, entity)">
                   <i class="mdi mdi-plus"></i>
                </div>
-               <div class="item-button -bottom-right"
+               <div ng-if="supportsFeature(FEATURES.LIGHT.BRIGHTNESS, entity)"
+                    class="item-button -bottom-right"
                     ng-click="decreaseBrightness($event, item, entity)">
                   <i class="mdi mdi-minus"></i>
                </div>
@@ -680,14 +749,17 @@
 
                <div class="item-slider">
                   <input type="range" ng-model="_c.value" value="{{ _c.value }}"
+                         ng-on-touchstart="$event.stopPropagation()"
+                         ng-on-touchmove="$event.stopPropagation()"
+                         ng-on-pointerdown="$event.stopPropagation()"
                          ng-change="lightSliderChanged(slider, item, entity, _c)"
                          step="{{ _c.step }}" min="{{ _c.min }}" max="{{ _c.max }}">
                </div>
             </div>
-          
+
             <div ng-if="item.colorpicker" class="item-entity-colorpicker">
-               <span>Color:</span> 
-               <input color-picker 
+               <span>Color:</span>
+               <input color-picker
                   color-picker-model="getRGBStringFromArray(entity.attributes.rgb_color)"
                   color-picker-show-value="false"
                   color-picker-output-format="'rgba'"
@@ -802,12 +874,19 @@
          </div>
       </div>
 
-
       <div ng-if="item.type === TYPES.CAMERA_THUMBNAIL"
            class="item-entity-container -below">
          <div class="item-camera">
-            <camera-thumbnail freezed="!isPageActive(page) || activeCamera || screensaverShown"
-                              item="item" entity="entity"></camera-thumbnail>
+            <camera-thumbnail item="item" entity="entity"
+                              freezed="!isPageActive(page) || activeCamera || screensaverShown"></camera-thumbnail>
+         </div>
+      </div>
+
+      <div ng-if="item.type === TYPES.CAMERA_STREAM"
+           class="item-entity-container -below">
+         <div class="item-camera">
+            <camera-stream item="item" entity="entity"
+                           freezed="!isPageActive(page) || activeCamera || screensaverShown"></camera-stream>
          </div>
       </div>
 
@@ -833,6 +912,9 @@
          <div class="item-slider" ng-if="(_c = getSliderConf(item, entity))">
             <input type="range" ng-model="_c.value"
                    ng-change="sliderChanged(item, entity, _c)"
+                   ng-on-touchstart="$event.stopPropagation()"
+                   ng-on-touchmove="$event.stopPropagation()"
+                   ng-on-pointerdown="$event.stopPropagation()"
                    step="{{ _c.step }}" min="{{ _c.min }}" max="{{ _c.max }}">
          </div>
       </div>
@@ -917,7 +999,7 @@
             </div>
 
             <div class="weather-line" ng-repeat="line in item.fields.list">
-               <span ng-bind="getWeatherLine(line, item. entity)"></span>
+               <span ng-bind="getWeatherLine(line, item, entity)"></span>
             </div>
 
             <!-- DEPRECATED -->
@@ -955,8 +1037,10 @@
                   <th>
                      <span ng-bind="itemField('dateTitle', item, entity) || 'Date'"></span>
                   </th>
-                  <th></th>
-                  <th>
+                  <th class="weather-list-header--icon">
+                     <span ng-bind="itemField('iconTitle', item, entity)"></span>
+                  </th>
+                  <th class="weather-list-header--primary">
                      <span ng-bind="itemField('primaryTitle', item, entity) || 'Forecast'"></span>
                   </th>
                   <th class="weather-list-header--secondary">
@@ -1009,9 +1093,9 @@
                <span ng-if="(_unit = entityUnit(item, entity))"
                      class="item-climate--target--unit" ng-bind="_unit"></span>
             </div>
-            <div class="item-climate--mode" ng-if="entity.attributes.operation_mode"
+            <div class="item-climate--mode" ng-if="entity.attributes.preset_mode"
                  ng-click="openSelect(item)">
-               <span ng-bind="entity.attributes.operation_mode"></span>
+               <span ng-bind="entity.attributes.preset_mode"></span>
             </div>
          </div>
 
@@ -1019,7 +1103,7 @@
               ng-style="itemSelectStyles(entity, entity.attributes.operation_list)">
 
             <div class="item-select--option"
-                 ng-repeat="option in entity.attributes.operation_list track by $index"
+                 ng-repeat="option in entity.attributes.preset_modes track by $index"
                  ng-class="{'-active': option === entity.state}"
                  ng-click="setClimateOption($event, item, entity, option)">
                <span ng-bind="option"></span>
@@ -1101,6 +1185,9 @@
                      <div class="media-player--volume">
                         <input type="range" ng-model="_c.value"
                                ng-change="volumeChanged(item, entity, _c)"
+                               ng-on-touchstart="$event.stopPropagation()"
+                               ng-on-touchmove="$event.stopPropagation()"
+                               ng-on-pointerdown="$event.stopPropagation()"
                                step="{{ _c.step }}" min="{{ _c.min }}" max="{{ _c.max }}">
                      </div>
                   </td>
@@ -1154,13 +1241,35 @@
             </div>
          </div>
       </div>
+
+      <div ng-if="item.type === TYPES.GAUGE"
+         class="item-entity-container">
+         <div class="item-gauge">
+            <ng-gauge size="getGaugeField('size', item, entity)"
+                      type="getGaugeField('type', item, entity)"
+                      thick="getGaugeField('thick', item, entity)"
+                      min="getGaugeField('min', item, entity)"
+                      max="getGaugeField('max', item, entity)"
+                      value="entityValue(item, entity)"
+                      cap="getGaugeField('cap', item, entity)"
+                      label="getGaugeField('label', item, entity)"
+                      prepend="getGaugeField('prepend', item, entity)"
+                      foreground-color="getGaugeField('foregroundColor', item, entity)"
+                      background-color="getGaugeField('backgroundColor', item, entity)"
+                      append="getGaugeField('append', item, entity)"
+                      thresholds="getGaugeField('thresholds', item, entity)"
+                      label-only="getGaugeField('labelOnly', item, entity)"
+                      duration="getGaugeField('duration', item, entity)"
+                      fraction-size="getGaugeField('fractionSize', item, entity)"></ng-gauge>
+         </div>
+      </div>
    </div>
 </script>
 
 
 
 <link rel="stylesheet" async
-      href="https://cdn.materialdesignicons.com/3.3.92/css/materialdesignicons.min.css">
+      href="https://cdn.materialdesignicons.com/4.7.95/css/materialdesignicons.min.css">
 
 </body>
 </html>

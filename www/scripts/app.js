@@ -47,6 +47,7 @@ var TYPES = {
    INPUT_DATETIME: 'input_datetime',
    CAMERA: 'camera',
    CAMERA_THUMBNAIL: 'camera_thumbnail',
+   CAMERA_STREAM: 'camera_stream',
    SCENE: 'scene',
    SLIDER: 'slider',
    IFRAME: 'iframe',
@@ -60,6 +61,7 @@ var TYPES = {
    VACUUM: 'vacuum',
    POPUP_IFRAME: 'popup_iframe',
    DIMMER_SWITCH: 'dimmer_switch',
+   GAUGE: 'gauge',
 };
 
 var HEADER_ITEMS = {
@@ -73,6 +75,9 @@ var HEADER_ITEMS = {
 var SCREENSAVER_ITEMS = HEADER_ITEMS;
 
 var FEATURES = {
+   LIGHT: {
+      BRIGHTNESS: 1
+   },
    MEDIA_PLAYER: {
       PAUSE: 1,
       SEEK: 2,
@@ -309,4 +314,11 @@ function debounce(func, wait, immediate) {
       timeout = setTimeout(later, wait);
       if (callNow) func.apply(context, args);
    };
+}
+
+function toAbsoluteServerURL(path) {
+   var startsWithProtocol = path.indexOf('http') === 0;
+   var url = startsWithProtocol ? path : CONFIG.serverUrl + '/'+ path;
+   // Replace extra forward slashes but not in protocol.
+   return url.replace(/([^:])\/+/g, '$1/');
 }
