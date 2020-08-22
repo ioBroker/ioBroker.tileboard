@@ -476,8 +476,8 @@ var servConn = {
     getVersion:       function (callback) {
         if (!this._checkConnection('getVersion', arguments)) return;
 
-        this._socket.emit('getVersion', function (version) {
-            if (callback) callback(version);
+        this._socket.emit('getVersion', function (error, version) {
+            callback && callback(version || error);
         });
     },
     subscribe:        function (idOrArray, callback) {
@@ -500,9 +500,9 @@ var servConn = {
             console.log('socket.io not initialized');
             return;
         }
-        this._socket.emit('getVersion', function (version) {
-            if (callback)
-                callback(version);
+        this._socket.emit('getVersion', function (error, version) {
+            callback && callback(version || error);
+
         });
     },
     readFile:         function (filename, callback, isRemote) {

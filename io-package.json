@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "tileboard",
-        "version": "0.3.0",
+        "version": "0.3.1",
         "title": "Visualisation",
         "titleLang": {
             "en": "Visualisation with TileBoard",
@@ -16,6 +16,18 @@
             "zh-cn": "使用TileBoard进行可视化"
         },
         "news": {
+            "0.3.1": {
+                "en": "The compatibility to socket.io 3.0.13 provided",
+                "de": "Die Kompatibilität zu socket.io 3.0.13 wird bereitgestellt",
+                "ru": "Обеспечена совместимость с socket.io 3.0.13",
+                "pt": "A compatibilidade com socket.io 3.0.13 fornecida",
+                "nl": "De compatibiliteit met socket.io 3.0.13 wordt geboden",
+                "fr": "La compatibilité avec socket.io 3.0.13 fournie",
+                "it": "La compatibilità con socket.io 3.0.13 fornita",
+                "es": "La compatibilidad con socket.io 3.0.13 proporcionada",
+                "pl": "Zapewniona kompatybilność z socket.io 3.0.13",
+                "zh-cn": "提供与socket.io 3.0.13的兼容性"
+            },
             "0.2.1": {
                 "en": "fixed pingConnection",
                 "de": "feste pingConnection",
@@ -96,7 +108,7 @@
         "license": "MIT",
         "dependencies": [
             {
-                "web": ">=1.5.4"
+                "web": ">=3.0.12"
             }
         ],
         "singleton": true,
