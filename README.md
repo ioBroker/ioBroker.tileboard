@@ -161,6 +161,6 @@ Added:
 * (bluefox) initial commit
 
 ## License
-Copyright (c) 2019-2020 bluefox <dogafox@gmail.com>
+Copyright (c) 2019-2026 bluefox <dogafox@gmail.com>
  
 MIT License
