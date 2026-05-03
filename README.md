@@ -160,6 +160,8 @@ Added:
 ### 0.1.0 (2019-01-16)
 * (bluefox) initial commit
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 Copyright (c) 2019-2020 bluefox <dogafox@gmail.com>
  
