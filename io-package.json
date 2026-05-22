@@ -1,186 +1,184 @@
 {
-    "common": {
-        "name": "tileboard",
-        "version": "0.3.1",
-        "title": "Visualisation",
-        "titleLang": {
-            "en": "Visualisation with TileBoard",
-            "de": "Visualisierung mit TileBoard",
-            "ru": "Визуализация с TileBoard",
-            "pt": "Visualização com o TileBoard",
-            "nl": "Visualisatie met TileBoard",
-            "fr": "Visualisation avec TileBoard",
-            "it": "Visualizzazione con TileBoard",
-            "es": "Visualización con TileBoard",
-            "pl": "Wizualizacja za pomocą TileBoard",
-            "zh-cn": "使用TileBoard进行可视化"
-        },
-        "news": {
-            "0.3.1": {
-                "en": "The compatibility to socket.io 3.0.13 provided",
-                "de": "Die Kompatibilität zu socket.io 3.0.13 wird bereitgestellt",
-                "ru": "Обеспечена совместимость с socket.io 3.0.13",
-                "pt": "A compatibilidade com socket.io 3.0.13 fornecida",
-                "nl": "De compatibiliteit met socket.io 3.0.13 wordt geboden",
-                "fr": "La compatibilité avec socket.io 3.0.13 fournie",
-                "it": "La compatibilità con socket.io 3.0.13 fornita",
-                "es": "La compatibilidad con socket.io 3.0.13 proporcionada",
-                "pl": "Zapewniona kompatybilność z socket.io 3.0.13",
-                "zh-cn": "提供与socket.io 3.0.13的兼容性"
-            },
-            "0.2.1": {
-                "en": "fixed pingConnection",
-                "de": "feste pingConnection",
-                "ru": "исправлено соединение pingConnection",
-                "pt": "pingConnection fixo",
-                "nl": "vaste pingConnection",
-                "fr": "pingConnection fixe",
-                "it": "pingConnection fisso",
-                "es": "pingConnection fijo",
-                "pl": "naprawiono pingConnection",
-                "zh-cn": "固定pingConnection"
-            },
-            "0.2.0": {
-                "en": "Changes of the original tileboard were merged",
-                "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",
-                "ru": "Изменения оригинальной tileboard были объединены",
-                "pt": "Mudanças do tileboard original foram fundidas",
-                "nl": "Wijzigingen van de originele tileboard zijn samengevoegd",
-                "fr": "Les modifications du tileboard de mosaïque d'origine ont été fusionnées",
-                "it": "Le modifiche del tileboard originale sono state unite",
-                "es": "Se fusionaron los cambios del tileboard original.",
-                "pl": "Zmiany w oryginalnym tileboard zostały scalone",
-                "zh-cn": "原始拼贴板的更改已合并"
-            },
-            "0.1.1": {
-                "en": "Changes of the original tileboard were merged",
-                "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",
-                "ru": "Изменения оригинальной tileboard были объединены",
-                "pt": "Mudanças do tileboard original foram fundidas",
-                "nl": "Wijzigingen van de originele tileboard zijn samengevoegd",
-                "fr": "Les modifications du tileboard de mosaïque d'origine ont été fusionnées",
-                "it": "Le modifiche del tileboard originale sono state unite",
-                "es": "Se fusionaron los cambios del tileboard original.",
-                "pl": "Zmiany w oryginalnym tileboard zostały scalone",
-                "zh-cn": "原始拼贴板的更改已合并"
-            },
-            "0.1.0": {
-                "en": "initial commit",
-                "de": "anfängliches Commit",
-                "ru": "начальный коммит",
-                "pt": "commit inicial",
-                "nl": "initiële commit",
-                "fr": "commit initial",
-                "it": "commit iniziale",
-                "es": "Compromiso inicial",
-                "pl": "początkowe zatwierdzenie",
-                "zh-cn": "初始提交"
-            }
-        },
-        "desc": {
-            "en": "TileBoard for visualisation in ioBroker",
-            "de": "TileBoard zur Visualisierung in ioBroker",
-            "ru": "TileBoard для визуализации в ioBroker",
-            "pt": "TileBoard para visualização no ioBroker",
-            "nl": "TileBoard voor visualisatie in ioBroker",
-            "fr": "TileBoard pour la visualisation dans ioBroker",
-            "it": "TileBoard per la visualizzazione in ioBroker",
-            "es": "TileBoard para visualización en ioBroker",
-            "pl": "TileBoard do wizualizacji w ioBroker",
-            "zh-cn": "TileBoard用于ioBroker中的可视化"
-        },
-        "platform": "Javascript/Node.js",
-        "loglevel": "info",
-        "icon": "tileboard.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.tileboard/master/admin/tileboard.png",
-        "keywords": [
-            "DashUI",
-            "GUI",
-            "graphical",
-            "scada"
-        ],
-        "readme": "https://github.com/iobroker/ioBroker.tileboard/blob/master/README.md",
-        "authors": [
-            "bluefox <dogafox@gmail.com>"
-        ],
-        "localLink": "%web_protocol%://%ip%:%web_port%/tileboard/index.html",
-        "license": "MIT",
-        "dependencies": [
-            {
-                "web": ">=3.0.12"
-            }
-        ],
-        "singleton": true,
-        "type": "visualization",
-        "noConfig": false,
-        "onlyWWW":  true,
-        "materialize": true,
-        "welcomeScreen": {
-            "link": "tileboard/index.html",
-            "name": "TileBoard",
-            "img": "tileboard/favicon.png",
-            "color": "#ffe9c8",
-            "order": 0
-        }
+  "common": {
+    "name": "tileboard",
+    "version": "0.3.1",
+    "title": "Visualisation",
+    "titleLang": {
+      "en": "Visualisation with TileBoard",
+      "de": "Visualisierung mit TileBoard",
+      "ru": "Визуализация с TileBoard",
+      "pt": "Visualização com o TileBoard",
+      "nl": "Visualisatie met TileBoard",
+      "fr": "Visualisation avec TileBoard",
+      "it": "Visualizzazione con TileBoard",
+      "es": "Visualización con TileBoard",
+      "pl": "Wizualizacja za pomocą TileBoard",
+      "zh-cn": "使用TileBoard进行可视化"
     },
-    "native": {
+    "news": {
+      "0.3.1": {
+        "en": "The compatibility to socket.io 3.0.13 provided",
+        "de": "Die Kompatibilität zu socket.io 3.0.13 wird bereitgestellt",
+        "ru": "Обеспечена совместимость с socket.io 3.0.13",
+        "pt": "A compatibilidade com socket.io 3.0.13 fornecida",
+        "nl": "De compatibiliteit met socket.io 3.0.13 wordt geboden",
+        "fr": "La compatibilité avec socket.io 3.0.13 fournie",
+        "it": "La compatibilità con socket.io 3.0.13 fornita",
+        "es": "La compatibilidad con socket.io 3.0.13 proporcionada",
+        "pl": "Zapewniona kompatybilność z socket.io 3.0.13",
+        "zh-cn": "提供与socket.io 3.0.13的兼容性"
+      },
+      "0.2.1": {
+        "en": "fixed pingConnection",
+        "de": "feste pingConnection",
+        "ru": "исправлено соединение pingConnection",
+        "pt": "pingConnection fixo",
+        "nl": "vaste pingConnection",
+        "fr": "pingConnection fixe",
+        "it": "pingConnection fisso",
+        "es": "pingConnection fijo",
+        "pl": "naprawiono pingConnection",
+        "zh-cn": "固定pingConnection"
+      },
+      "0.2.0": {
+        "en": "Changes of the original tileboard were merged",
+        "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",
+        "ru": "Изменения оригинальной tileboard были объединены",
+        "pt": "Mudanças do tileboard original foram fundidas",
+        "nl": "Wijzigingen van de originele tileboard zijn samengevoegd",
+        "fr": "Les modifications du tileboard de mosaïque d'origine ont été fusionnées",
+        "it": "Le modifiche del tileboard originale sono state unite",
+        "es": "Se fusionaron los cambios del tileboard original.",
+        "pl": "Zmiany w oryginalnym tileboard zostały scalone",
+        "zh-cn": "原始拼贴板的更改已合并"
+      },
+      "0.1.1": {
+        "en": "Changes of the original tileboard were merged",
+        "de": "Änderungen des ursprünglichen Tileboards wurden zusammengeführt",
+        "ru": "Изменения оригинальной tileboard были объединены",
+        "pt": "Mudanças do tileboard original foram fundidas",
+        "nl": "Wijzigingen van de originele tileboard zijn samengevoegd",
+        "fr": "Les modifications du tileboard de mosaïque d'origine ont été fusionnées",
+        "it": "Le modifiche del tileboard originale sono state unite",
+        "es": "Se fusionaron los cambios del tileboard original.",
+        "pl": "Zmiany w oryginalnym tileboard zostały scalone",
+        "zh-cn": "原始拼贴板的更改已合并"
+      },
+      "0.1.0": {
+        "en": "initial commit",
+        "de": "anfängliches Commit",
+        "ru": "начальный коммит",
+        "pt": "commit inicial",
+        "nl": "initiële commit",
+        "fr": "commit initial",
+        "it": "commit iniziale",
+        "es": "Compromiso inicial",
+        "pl": "początkowe zatwierdzenie",
+        "zh-cn": "初始提交"
+      }
     },
-    "instanceObjects": [
-        {
-            "_id": "",
-            "type": "meta",
-            "common": {
-                "name": "user files and images for TileBoard",
-                "type": "meta.user"
-            },
-            "native": {}
-        },
-        {
-            "_id": "control",
-            "type": "channel",
-            "common": {
-                "name": "Control TileBoard"
-            },
-            "native": {}
-        },
-        {
-            "_id": "control.instance",
-            "type": "state",
-            "common": {
-                "name": "Control TileBoard",
-                "type": "string",
-                "desc": "Write here browser instance ID to control or '*' to control all instances"
-            },
-            "native": {}
-        },
-        {
-            "_id": "control.command",
-            "type": "state",
-            "common": {
-                "name": "Command for TileBoard",
-                "type": "string",
-                "desc": "Writing this variable act as the trigger. Instance and data must be preset before 'command' will be written. 'changedView' will be signalled too",
-                "states": {
-                    "alert": "alert",
-                    "changeView": "changeView",
-                    "refresh": "refresh",
-                    "reload": "reload",
-                    "popup": "popup",
-                    "playSound": "playSound"
-                }
-            },
-            "native": {}
-        },
-        {
-            "_id": "control.data",
-            "type": "state",
-            "common": {
-                "name": "Data for control TileBoard",
-                "type": "string",
-                "desc": "Used for: alert, changeView, dialog, popup, playSound, changedView"
-            },
-            "native": {}
+    "desc": {
+      "en": "TileBoard for visualisation in ioBroker",
+      "de": "TileBoard zur Visualisierung in ioBroker",
+      "ru": "TileBoard для визуализации в ioBroker",
+      "pt": "TileBoard para visualização no ioBroker",
+      "nl": "TileBoard voor visualisatie in ioBroker",
+      "fr": "TileBoard pour la visualisation dans ioBroker",
+      "it": "TileBoard per la visualizzazione in ioBroker",
+      "es": "TileBoard para visualización en ioBroker",
+      "pl": "TileBoard do wizualizacji w ioBroker",
+      "zh-cn": "TileBoard用于ioBroker中的可视化"
+    },
+    "platform": "Javascript/Node.js",
+    "loglevel": "info",
+    "icon": "tileboard.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.tileboard/master/admin/tileboard.png",
+    "keywords": [
+      "DashUI",
+      "GUI",
+      "graphical",
+      "scada"
+    ],
+    "readme": "https://github.com/iobroker/ioBroker.tileboard/blob/master/README.md",
+    "authors": [
+      "bluefox <dogafox@gmail.com>"
+    ],
+    "localLink": "%web_protocol%://%ip%:%web_port%/tileboard/index.html",
+    "license": "MIT",
+    "dependencies": [
+      {
+        "web": ">=3.0.12"
+      }
+    ],
+    "singleton": true,
+    "type": "visualization",
+    "onlyWWW": true,
+    "materialize": true,
+    "welcomeScreen": {
+      "link": "tileboard/index.html",
+      "name": "TileBoard",
+      "img": "tileboard/favicon.png",
+      "color": "#ffe9c8",
+      "order": 0
+    }
+  },
+  "native": {},
+  "instanceObjects": [
+    {
+      "_id": "",
+      "type": "meta",
+      "common": {
+        "name": "user files and images for TileBoard",
+        "type": "meta.user"
+      },
+      "native": {}
+    },
+    {
+      "_id": "control",
+      "type": "channel",
+      "common": {
+        "name": "Control TileBoard"
+      },
+      "native": {}
+    },
+    {
+      "_id": "control.instance",
+      "type": "state",
+      "common": {
+        "name": "Control TileBoard",
+        "type": "string",
+        "desc": "Write here browser instance ID to control or '*' to control all instances"
+      },
+      "native": {}
+    },
+    {
+      "_id": "control.command",
+      "type": "state",
+      "common": {
+        "name": "Command for TileBoard",
+        "type": "string",
+        "desc": "Writing this variable act as the trigger. Instance and data must be preset before 'command' will be written. 'changedView' will be signalled too",
+        "states": {
+          "alert": "alert",
+          "changeView": "changeView",
+          "refresh": "refresh",
+          "reload": "reload",
+          "popup": "popup",
+          "playSound": "playSound"
         }
-    ]
+      },
+      "native": {}
+    },
+    {
+      "_id": "control.data",
+      "type": "state",
+      "common": {
+        "name": "Data for control TileBoard",
+        "type": "string",
+        "desc": "Used for: alert, changeView, dialog, popup, playSound, changedView"
+      },
+      "native": {}
+    }
+  ]
 }
