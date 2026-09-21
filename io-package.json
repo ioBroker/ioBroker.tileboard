@@ -91,6 +91,7 @@
         },
         "platform": "Javascript/Node.js",
         "loglevel": "info",
+        "tier": 3,
         "icon": "tileboard.png",
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.tileboard/master/admin/tileboard.png",
