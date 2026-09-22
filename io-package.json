@@ -116,9 +116,10 @@
         ],
         "singleton": true,
         "type": "visualization",
-        "noConfig": false,
         "onlyWWW":  true,
-        "materialize": true,
+        "adminUI": {
+            "config": "materialize"
+        },
         "welcomeScreen": {
             "link": "tileboard/index.html",
             "name": "TileBoard",
