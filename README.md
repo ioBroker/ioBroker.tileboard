@@ -1,3 +1,5 @@
+**Repo is deprecated and will not be developed anymore!**
+
 ![Logo](admin/tileboard.png)
 # ioBroker.tileboard
 
